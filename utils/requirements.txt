@@ -1,4 +1,3 @@
-json
 pymssql
 boto3
 botocore
