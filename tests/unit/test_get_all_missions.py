@@ -1,5 +1,5 @@
 from unittest import TestCase
-from modules.get_all_missions.app import lambda_handler
+from modules.missions.get_all_missions.app import lambda_handler
 
 
 class Test(TestCase):

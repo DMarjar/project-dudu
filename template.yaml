@@ -12,6 +12,57 @@ Globals:
 
 Resources:
 
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaBasicExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  MissionApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: MissionApi
+      StageName: Prod
+
+  GetAllMissionsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/get_all_missions/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetAllMissions:
+          Type: Api
+          Properties:
+            Path: /get_all_missions
+            Method: get
 
 Outputs:
-
+  LambdaExecutionRoleArn:
+    Description: "Implicit IAM Role created for Lambda function"
+    Value: !GetAtt LambdaExecutionRole.Arn
+  GetAllMissionsApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Get All Missions function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_all_missions/"
+  GetAllMissionsFunctionArn:
+    Description: "Get All Missions Lambda Function ARN"
+    Value: !GetAtt GetAllMissionsFunction.Arn
