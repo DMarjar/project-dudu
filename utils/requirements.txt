@@ -1,3 +1,0 @@
-pymssql
-boto3
-botocore
