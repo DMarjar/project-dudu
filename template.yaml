@@ -34,12 +34,6 @@ Resources:
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
 
-  MissionApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: MissionApi
-      StageName: Prod
-
   GetAllMissionsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -55,6 +49,13 @@ Resources:
           Properties:
             Path: /get_all_missions
             Method: get
+
+  MissionApi:
+    Type: AWS::Serverless::Api
+    DependsOn: GetAllMissionsFunction
+    Properties:
+      Name: MissionApi
+      StageName: Prod
 
 Outputs:
   LambdaExecutionRoleArn:
