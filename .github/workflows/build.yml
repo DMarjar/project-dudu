@@ -48,7 +48,7 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies for db_connection
         run: |
-          cd utils/db_connection
+          cd utils
           pip install -r requirements.txt
       - name: Install dependencies for get_all_missions
         run: |
