@@ -19,6 +19,7 @@ def lambda_handler(event, ___):
     return response
 
 
+#validate payload
 def validate_body(body):
     if 'original_description' not in body:
         raise Exception("original_description is required")
