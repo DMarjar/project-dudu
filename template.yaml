@@ -47,12 +47,12 @@ Resources:
         GetAllMissions:
           Type: Api
           Properties:
+            RestApiId: !Ref MissionApi
             Path: /get_all_missions
             Method: get
 
   MissionApi:
     Type: AWS::Serverless::Api
-    DependsOn: GetAllMissionsFunction
     Properties:
       Name: MissionApi
       StageName: Prod
