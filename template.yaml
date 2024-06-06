@@ -51,6 +51,23 @@ Resources:
             Path: /get_all_missions
             Method: get
 
+  InsertMissionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/insert_mission/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        InsertMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /insert_mission
+            Method: post
+
   MissionApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -67,3 +84,10 @@ Outputs:
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
     Value: !GetAtt GetAllMissionsFunction.Arn
+
+  InsertMissionApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Insert Mission function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_mission/"
+  InsertMissionFunctionArn:
+    Description: "Insert Mission Lambda Function ARN"
+    Value: !GetAtt InsertMissionFunction.Arn
