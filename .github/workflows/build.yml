@@ -25,11 +25,6 @@ jobs:
         with:
           python-version: '3.12'
 
-#      - name: Install dependencies for insert_data_class
-#        run: |
-#          cd insert_data_class
-#          pip install -r requirements.txt
-
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
