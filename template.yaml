@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  project-dudu
+
+  Sample SAM Template for project-dudu
+
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 256
+
+Resources:
+
+
+Outputs:
+
