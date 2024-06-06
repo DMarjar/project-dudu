@@ -50,6 +50,10 @@ jobs:
         run: |
           cd modules/missions/get_all_missions
           pip install -r requirements.txt
+      - name: Install dependencies for get_one_mission
+        run: |
+          cd modules/missions/get_one_mission
+          pip install -r requirements.txt
       - name: Install AWS CLI
         run: |
           sudo apt-get update
