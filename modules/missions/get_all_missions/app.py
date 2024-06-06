@@ -2,7 +2,7 @@ import json
 from common.db_connection import get_db_connection
 
 
-def lambda_handler(_, __):
+def lambda_handler(__, ___):
     try:
         missions = get_all_missions()
         print(missions)
@@ -24,7 +24,12 @@ def get_all_missions():
         with connection.cursor() as cursor:
             sql = "SELECT * FROM missions"
             cursor.execute(sql)
-            missions = cursor.fetchall()
+            rows = cursor.fetchall()
+            column_names = [desc[0] for desc in cursor.description]
+            missions = [
+                dict(zip(column_names, row))
+                for row in rows
+            ]
     finally:
         connection.close()
     return missions
