@@ -1,5 +1,4 @@
 import boto3
-import openai
 from botocore.exceptions import ClientError
 from openai import OpenAI
 
