@@ -1,3 +1,5 @@
+import json
+
 import boto3
 from botocore.exceptions import ClientError
 from openai import OpenAI
@@ -60,3 +62,5 @@ def get_secret():
         raise e
 
     secret = get_secret_value_response['SecretString']
+
+    return json.loads(secret)
