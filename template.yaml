@@ -89,11 +89,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: modules/missions/complete_mission/
-      
-  CancelMissionFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: modules/missions/cancel_mission/
       Handler: app.lambda_handler
       Runtime: python3.12
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -110,7 +105,30 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref MissionApi
-            Path: /cancel_mission/{id_mission}
+            Path: /complete_mission
+            Method: post
+      
+  CancelMissionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/cancel_mission/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetAllMissions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /cancel_mission
+            Method: put
+        CancelMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /cancel_mission
             Method: post
 
   MissionApi:
@@ -135,10 +153,11 @@ Outputs:
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
   CancelMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Cancel Mission function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_mission/{id_mission}"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_mission/"
   InsertMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Insert Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_mission/"
+
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
     Value: !GetAtt GetAllMissionsFunction.Arn
