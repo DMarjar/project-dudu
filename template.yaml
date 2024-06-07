@@ -68,6 +68,25 @@ Resources:
             Path: /get_one_mission/{id_mission}
             Method: get
 
+
+
+  CancelMissionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/cancel_mission/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        CancelMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /cancel_mission/{id_mission}
+            Method: post
+
   MissionApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -84,9 +103,15 @@ Outputs:
   GetOneMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
+  CancelMissionApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Cancel Mission function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_mission/{id_mission}"
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
     Value: !GetAtt GetAllMissionsFunction.Arn
   GetOneMissionFunctionArn:
     Description: "Get One Mission Lambda Function ARN"
     Value: !GetAtt GetOneMissionFunction.Arn
+  CancelMissionFunctionArn:
+    Description: "Cancel Mission Lambda Function ARN"
+    Value: !GetAtt CancelMissionFunction.Arn
