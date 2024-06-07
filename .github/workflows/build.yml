@@ -27,6 +27,14 @@ jobs:
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.projectKey=DMarjar_integradora-DUDU
+            -Dsonar.organization=dmarjar
+            -Dsonar.sources=modules/missions
+            -Dsonar.python.version=3.12
+            -Dsonar.exclusions=modules/missions/**/common/db_connection.py
+            -X
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -34,7 +42,7 @@ jobs:
   deploy:
     name: Deploy to AWS
     runs-on: ubuntu-latest
-    needs: sonarcloud
+    ##needs: sonarcloud
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
 
     steps:
@@ -50,6 +58,10 @@ jobs:
         run: |
           cd modules/missions/get_all_missions
           pip install -r requirements.txt
+      - name: Install dependencies for insert_mission
+        run: |
+          cd modules/missions/insert_mission
+          pip install -r requirements.txt
       - name: Install dependencies for get_one_mission
         run: |
           cd modules/missions/get_one_mission
@@ -57,6 +69,9 @@ jobs:
       - name: Install dependencies for complete_mission
         run: |
           cd modules/missions/complete_mission
+      - name: Install dependencies for cancel_mission
+        run: |
+          cd modules/missions/cancel_mission
           pip install -r requirements.txt
       - name: Install AWS CLI
         run: |

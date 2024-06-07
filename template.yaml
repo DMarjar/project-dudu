@@ -51,6 +51,23 @@ Resources:
             Path: /get_all_missions
             Method: get
 
+  InsertMissionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/insert_mission/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        InsertMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /insert_mission
+            Method: post
+
   GetOneMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -72,6 +89,11 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: modules/missions/complete_mission/
+      
+  CancelMissionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/cancel_mission/
       Handler: app.lambda_handler
       Runtime: python3.12
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -84,6 +106,12 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /complete_mission
             Method: put
+        CancelMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /cancel_mission/{id_mission}
+            Method: post
 
   MissionApi:
     Type: AWS::Serverless::Api
@@ -95,6 +123,7 @@ Outputs:
   LambdaExecutionRoleArn:
     Description: "Implicit IAM Role created for Lambda function"
     Value: !GetAtt LambdaExecutionRole.Arn
+    
   GetAllMissionsApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get All Missions function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_all_missions/"
@@ -104,12 +133,24 @@ Outputs:
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
+  CancelMissionApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Cancel Mission function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_mission/{id_mission}"
+  InsertMissionApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Insert Mission function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_mission/"
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
     Value: !GetAtt GetAllMissionsFunction.Arn
+  InsertMissionFunctionArn:
+    Description: "Insert Mission Lambda Function ARN"
+    Value: !GetAtt InsertMissionFunction.Arn
   GetOneMissionFunctionArn:
     Description: "Get One Mission Lambda Function ARN"
     Value: !GetAtt GetOneMissionFunction.Arn
   CompleteMissionFunctionArn:
     Description: "Complete Mission Lambda Function ARN"
     Value: !GetAtt CompleteMissionFunction.Arn
+  CancelMissionFunctionArn:
+    Description: "Cancel Mission Lambda Function ARN"
+    Value: !GetAtt CancelMissionFunction.Arn
