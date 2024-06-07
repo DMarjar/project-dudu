@@ -51,6 +51,24 @@ Resources:
             Path: /get_all_missions
             Method: get
 
+  UpdateMissionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/update_mission
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetAllMissions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /update_mission
+            Method: put
+
+
   GetOneMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -84,9 +102,15 @@ Outputs:
   GetOneMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
+  UpdateMissionApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Update Mission function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_mission/{id_mission}"
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
     Value: !GetAtt GetAllMissionsFunction.Arn
   GetOneMissionFunctionArn:
     Description: "Get One Mission Lambda Function ARN"
     Value: !GetAtt GetOneMissionFunction.Arn
+  UpdateMissionFunctionArn:
+      Description: "Update Mission Lambda Function ARN"
+      Value: !GetAtt UpdateMissionFunction.Arn
