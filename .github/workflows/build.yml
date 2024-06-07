@@ -46,9 +46,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.12'
-      - name: Install dependencies for get_all_missions
+      - name: Install dependencies for insert_mission
         run: |
-          cd modules/missions/get_all_missions
+          cd modules/missions/insert_mission
           pip install -r requirements.txt
       - name: Install AWS CLI
         run: |

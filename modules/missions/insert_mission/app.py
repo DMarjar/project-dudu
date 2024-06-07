@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
-import boto3
-from modules.missions.insert_mission.common.db_connection import get_db_connection
+from common.db_connection import get_db_connection
+from common.openai_connection import get_openai_client
 
 
 def lambda_handler(event, ___):
@@ -15,6 +15,15 @@ def lambda_handler(event, ___):
 
         #validate existence of user
         validate_user(body['id_user'])
+
+        #Generate fantasy description
+        fantasy_description = get_openai_client(body.get('original_description', ''))
+
+        #add fantasy description to body
+        body['fantasy_description'] = fantasy_description
+
+        #insert mission
+        insert_mission(body)
 
         response = {
             'statusCode': 200,
@@ -70,6 +79,25 @@ def validate_user(id_user):
             print(rows)
             if len(rows) == 0:
                 raise Exception("User not found")
+    except Exception as e:
+        raise e
+    finally:
+        connection.close()
+    return True
+
+
+#insert mission
+def insert_mission(body):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = "INSERT INTO missions (original_description, fantasy_description, creation_date, status, id_user) VALUES (%s, %s, %s, %s, %s)"
+            cursor.execute(sql, (
+            body['original_description'], body['fantasy_description'], body['creation_date'], body['status'],
+            body['id_user']))
+        connection.commit()
+    except Exception as e:
+        raise e
     finally:
         connection.close()
     return True
