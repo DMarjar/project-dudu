@@ -78,7 +78,7 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        GetAllMissions:
+        GetOneMission:
           Type: Api
           Properties:
             RestApiId: !Ref MissionApi
@@ -95,18 +95,12 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        GetAllMissions:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MissionApi
-            Path: /complete_mission
-            Method: put
         CancelMission:
           Type: Api
           Properties:
             RestApiId: !Ref MissionApi
-            Path: /complete_mission
-            Method: post
+            Path: /complete_mission/{id_mission}
+            Method: put
       
   CancelMissionFunction:
     Type: AWS::Serverless::Function
@@ -118,18 +112,12 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        GetAllMissions:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MissionApi
-            Path: /cancel_mission
-            Method: put
         CancelMission:
           Type: Api
           Properties:
             RestApiId: !Ref MissionApi
-            Path: /cancel_mission
-            Method: post
+            Path: /cancel_mission/{id_user}/{id_mission}
+            Method: put
 
   MissionApi:
     Type: AWS::Serverless::Api
@@ -150,10 +138,10 @@ Outputs:
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/{id_mission}"
   CancelMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Cancel Mission function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_mission/"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_mission/{id_user}/{id_mission}"
   InsertMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Insert Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_mission/"
