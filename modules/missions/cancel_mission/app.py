@@ -1,5 +1,5 @@
 import json
-from modules.missions.cancel_mission.common.db_connection import get_db_connection
+from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, __):
@@ -14,7 +14,7 @@ def lambda_handler(event, __):
             if not mission:
                 return {
                     'statusCode': 404,
-                    'body': json.dumps('La misión no existe o no pertenece al usuario')
+                    'body': json.dumps('Mission not found')
                 }
             update_sql = "UPDATE missions SET status = 'cancelled' WHERE id_user = %s AND id_mission = %s"
             cursor.execute(update_sql, (id_user, id_mission))
@@ -22,12 +22,12 @@ def lambda_handler(event, __):
 
         return {
             'statusCode': 200,
-            'body': json.dumps('La misión ha sido deshonrada por los Dioses')
+            'body': json.dumps('Mission has been banished by the Gods')
         }
     except Exception as e:
         return {
             'statusCode': 400,
-            'body': json.dumps(f"Un velo de oscuridad ha impedido la cancelación de la misión: {str(e)}")
+            'body': json.dumps(f"An error occurred while cancelling the mission: {str(e)}")
         }
     finally:
         connection.close()

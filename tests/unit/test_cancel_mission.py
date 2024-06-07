@@ -9,4 +9,5 @@ class Test(TestCase):
         result = lambda_handler(event, context)
         self.assertEqual(result, {
             'statusCode': 200,
-            'body': '"La misión ha sido deshonrada por los Dioses"'})
+            'body': '"Mission has been banished by the Gods"'
+        })

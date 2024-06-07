@@ -68,8 +68,6 @@ Resources:
             Path: /get_one_mission/{id_mission}
             Method: get
 
-
-
   CancelMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
