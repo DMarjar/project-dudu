@@ -6,9 +6,7 @@ from common.openai_connection import get_openai_client
 
 def lambda_handler(event, ___):
     try:
-        print("Inserting mission")
         body = json.loads(event['body'])
-        print(body)
 
         #validate payload
         validate_body(body)
@@ -76,7 +74,6 @@ def validate_user(id_user):
             sql = "SELECT * FROM users WHERE id_user = %s"
             cursor.execute(sql, id_user)
             rows = cursor.fetchall()
-            print(rows)
             if len(rows) == 0:
                 raise Exception("User not found")
     except Exception as e:

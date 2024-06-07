@@ -23,7 +23,7 @@ def get_openai_client(original_description):
 
     # create openai client with secret
     client = OpenAI(
-        api_key=secret['openai_key']
+        api_key=secret['OPENAI_KEY']
     )
 
     # post request to openai
