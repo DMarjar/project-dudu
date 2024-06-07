@@ -4,8 +4,10 @@ from common.db_connection import get_db_connection
 
 def lambda_handler(event, __):
     connection = get_db_connection()
-    id_user = event['id_user']
-    id_mission = event['id_mission']
+    body = json.loads(event['body'])
+    id_user = body['id_user']
+    id_mission = body['id_mission']
+
     try:
         with connection.cursor() as cursor:
             check_sql = "SELECT id_mission FROM missions WHERE id_user = %s AND id_mission = %s"
