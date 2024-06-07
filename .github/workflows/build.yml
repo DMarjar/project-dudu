@@ -58,6 +58,9 @@ jobs:
         run: |
           cd modules/missions/get_one_mission
           pip install -r requirements.txt
+      - name: Install dependencies for complete_mission
+        run: |
+          cd modules/missions/complete_mission
       - name: Install dependencies for cancel_mission
         run: |
           cd modules/missions/cancel_mission
