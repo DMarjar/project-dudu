@@ -99,7 +99,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref MissionApi
-            Path: /complete_mission/{id_mission}
+            Path: /complete_mission
             Method: put
       
   CancelMissionFunction:
@@ -116,7 +116,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref MissionApi
-            Path: /cancel_mission/{id_user}/{id_mission}
+            Path: /cancel_mission
             Method: put
 
   MissionApi:
@@ -138,10 +138,10 @@ Outputs:
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/{id_mission}"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
   CancelMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Cancel Mission function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_mission/{id_user}/{id_mission}"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_mission/"
   InsertMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Insert Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_mission/"

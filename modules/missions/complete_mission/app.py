@@ -1,10 +1,10 @@
 import json
-from modules.missions.complete_mission.common.db_connection import get_db_connection
+from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, __):
     try:
-        body = json.loads(event['body'])  # Deserializar el cuerpo del evento
+        body = json.loads(event['body'])
         id_mission = body['id_mission']
         update_mission_status(id_mission, 'completed')
         response = {
