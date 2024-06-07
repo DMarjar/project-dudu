@@ -6,8 +6,9 @@ def test_lambda_handler():
     mock_event = {
         'body': json.dumps({
             'original_description': 'bañar al perro porque ya esta bien sucio',
-            'creation_date': 'creation_date',
-            'status': 'status'
+            'creation_date': '2024-06-07',
+            'status': 'pending',
+            'id_user': 1
         })
     }
 
