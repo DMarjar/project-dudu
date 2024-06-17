@@ -2,80 +2,106 @@ import json
 from datetime import datetime
 from common.db_connection import get_db_connection
 from common.openai_connection import get_openai_client
+from common.HttpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
+    """ This function generates a fantasy description for a mission and inserts it into the database
+
+    body (dict): The body parameter is a dictionary that contains the following attributes:
+        - original_description (str): The original description of the mission
+        - id_user (int): The user id
+        - creation_date (str): The creation date of the mission
+        - status (str): The status of the mission
+
+    Returns:
+        dict: A dictionary that contains the status code and a message
+    """
+
     try:
         body = json.loads(event['body'])
 
-        #validate payload
+        # Validate payload
         validate_body(body)
 
-        #validate existence of user
+        # Validate existence of user
         validate_user(body['id_user'])
 
-        #Generate fantasy description
+        # Generate fantasy description
         fantasy_description = get_openai_client(body.get('original_description', ''))
 
-        #add fantasy description to body
+        # Add fantasy description to body
         body['fantasy_description'] = fantasy_description
 
-        #insert mission
+        # Insert mission
         insert_mission(body)
 
         response = {
             'statusCode': 200,
             'body': json.dumps("Mission inserted successfully")
         }
-    except Exception as e:
+
+    except HttpStatusCodeError as e:
         response = {
-            'statusCode': 500,
-            'body': json.dumps(f"An error occurred while getting the missions: {str(e)} - {event}")
+            'statusCode': e.status_code,
+            'body': json.dumps(e.message)
         }
 
     return response
 
 
-#validate payload
+# Validate payload
 def validate_body(body):
-    #validate original_description###
+    """ This function validates the payload"""
+
+    # Validate original_description
     if 'original_description' not in body:
-        raise Exception("original_description is required")
+        raise HttpStatusCodeError(400, "original_description is required")
 
-    #validate id_user###
+    # Validate id_user
     if 'id_user' not in body:
-        raise Exception("id_user is required")
+        raise HttpStatusCodeError(400, "id_user is required")
 
-    #validate creation_date###
+    # Validate creation_date
     if 'creation_date' not in body:
-        raise Exception("creation_date is required")
+        raise HttpStatusCodeError(400, "creation_date is required")
 
     try:
         datetime.strptime(body['creation_date'], '%Y-%m-%d')
     except ValueError:
-        raise Exception("Incorrect creation_date format, should be YYYY-MM-DD HH:MM:SS")
+        raise HttpStatusCodeError(400, "Incorrect creation_date format, should be YYYY-MM-DD")
 
-    #validate status###
+    # Validate status
     if 'status' not in body:
-        raise Exception("status is required")
+        raise HttpStatusCodeError(400, "status is required")
 
     if body['status'] not in ['pending', 'completed', 'cancelled', 'in_progress']:
-        raise Exception("Status not valid")
+        raise HttpStatusCodeError(400, "Invalid status")
 
     return True
 
 
-#validate existence of user
+# Validate existence of user
 def validate_user(id_user):
-    connection = get_db_connection()
-    try:
+    """ This function validates the existence of a user
 
+    id_user (int): The user id
+
+    Returns:
+        bool: True if the user exists
+    """
+
+    connection = get_db_connection()
+
+    try:
         with connection.cursor() as cursor:
             sql = "SELECT * FROM users WHERE id_user = %s"
             cursor.execute(sql, id_user)
             rows = cursor.fetchall()
+
             if len(rows) == 0:
-                raise Exception("User not found")
+                raise HttpStatusCodeError(404, "User not found")
+
     except Exception as e:
         raise e
     finally:
@@ -83,7 +109,7 @@ def validate_user(id_user):
     return True
 
 
-#insert mission
+# Insert mission
 def insert_mission(body):
     connection = get_db_connection()
     try:
