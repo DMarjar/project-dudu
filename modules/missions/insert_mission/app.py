@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
-from common.db_connection import get_db_connection
-from common.openai_connection import get_openai_client
-from common.HttpStatusCodeError import HttpStatusCodeError
+from modules.missions.insert_mission.common.db_connection import get_db_connection
+from modules.missions.insert_mission.common.openai_connection import get_openai_client
+from modules.missions.insert_mission.common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
@@ -42,6 +42,7 @@ def lambda_handler(event, ___):
         }
 
     except HttpStatusCodeError as e:
+        print(e.message)
         response = {
             'statusCode': e.status_code,
             'body': json.dumps(e.message)
