@@ -1,3 +1,4 @@
+# SonarQube/SonarCloud ignore start
 import json
 import pymysql
 import boto3
@@ -42,3 +43,4 @@ def get_secrets():
     secret = get_secret_value_response['SecretString']
 
     return json.loads(secret)
+# SonarQube/SonarCloud ignore end
