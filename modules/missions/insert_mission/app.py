@@ -59,12 +59,27 @@ def validate_body(body):
     if 'original_description' not in body:
         raise HttpStatusCodeError(400, "original_description is required")
 
+    if body['original_description'] is None:
+        raise HttpStatusCodeError(400, "original_description is required")
+
+    if not isinstance(body['original_description'], str):
+        raise HttpStatusCodeError(400, "original_description must be a string")
+
+    if len(body['original_description']) == 0:
+        raise HttpStatusCodeError(400, "original_description cannot be empty")
+
     # Validate id_user
     if 'id_user' not in body:
         raise HttpStatusCodeError(400, "id_user is required")
 
+    if body['id_user'] is None:
+        raise HttpStatusCodeError(400, "id_user is required")
+
     # Validate creation_date
     if 'creation_date' not in body:
+        raise HttpStatusCodeError(400, "creation_date is required")
+
+    if body['creation_date'] is None:
         raise HttpStatusCodeError(400, "creation_date is required")
 
     try:
@@ -74,6 +89,9 @@ def validate_body(body):
 
     # Validate status
     if 'status' not in body:
+        raise HttpStatusCodeError(400, "status is required")
+
+    if body['status'] is None:
         raise HttpStatusCodeError(400, "status is required")
 
     if body['status'] not in ['pending', 'completed', 'cancelled', 'in_progress']:
