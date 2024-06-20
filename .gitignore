@@ -61,6 +61,13 @@ Temporary Items
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 
+# .idea files
+.idea/*.iml
+.idea/modules.xml
+.idea/aws.xml
+.idea/misc.xml
+.idea/vcs.xml
+
 # Gradle:
 .idea/**/gradle.xml
 .idea/**/libraries
