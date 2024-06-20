@@ -1,8 +1,5 @@
 import json
-<<<<<<< HEAD
-=======
 from pymysql.cursors import DictCursor
->>>>>>> 7fb4870c92375fd1b937a958ff9201d2d1fff65d
 from modules.missions.get_all_missions.common.db_connection import get_db_connection
 
 
