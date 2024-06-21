@@ -34,3 +34,11 @@ class Test(TestCase):
                              'creation_date': '2022-01-01',
                              'status': 'pending'
                          })})
+
+        mock_get_all_missions.return_value = []
+        self.assertEqual(app.lambda_handler(None, None),
+                         {'statusCode': 204, 'body': json.dumps("No missions found")})
+
+        mock_get_all_missions.side_effect = Exception("An error occurred while getting the missions")
+        self.assertEqual(app.lambda_handler(None, None),
+                         {'statusCode': 500, 'body': json.dumps("An error occurred while getting the missions: An error occurred while getting the missions")})
