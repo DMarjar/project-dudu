@@ -42,7 +42,6 @@ def lambda_handler(event, ___):
         }
 
     except HttpStatusCodeError as e:
-        print(e.message)
         response = {
             'statusCode': e.status_code,
             'body': json.dumps(e.message)
@@ -109,7 +108,6 @@ def validate_user(id_user):
     Returns:
         bool: True if the user exists
     """
-
     connection = get_db_connection()
 
     try:
@@ -121,8 +119,8 @@ def validate_user(id_user):
             if len(rows) == 0:
                 raise HttpStatusCodeError(404, "User not found")
 
-    except Exception as e:
-        raise e
+    except Exception:
+        raise HttpStatusCodeError(500, "Error validating user")
     finally:
         connection.close()
     return True
@@ -135,11 +133,11 @@ def insert_mission(body):
         with connection.cursor() as cursor:
             sql = "INSERT INTO missions (original_description, fantasy_description, creation_date, status, id_user) VALUES (%s, %s, %s, %s, %s)"
             cursor.execute(sql, (
-            body['original_description'], body['fantasy_description'], body['creation_date'], body['status'],
-            body['id_user']))
+                body['original_description'], body['fantasy_description'], body['creation_date'], body['status'],
+                body['id_user']))
         connection.commit()
-    except Exception as e:
-        raise e
+    except Exception:
+        raise HttpStatusCodeError(500, "Error inserting mission")
     finally:
         connection.close()
     return True
