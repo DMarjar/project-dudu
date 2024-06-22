@@ -47,6 +47,12 @@ def lambda_handler(event, ___):
             'body': json.dumps(e.message)
         }
 
+    except Exception as e:
+        response = {
+            'statusCode': 500,
+            'body': json.dumps(str(e))
+        }
+
     return response
 
 
@@ -118,9 +124,6 @@ def validate_user(id_user):
 
             if len(rows) == 0:
                 raise HttpStatusCodeError(404, "User not found")
-
-    except Exception:
-        raise HttpStatusCodeError(500, "Error validating user")
     finally:
         connection.close()
     return True

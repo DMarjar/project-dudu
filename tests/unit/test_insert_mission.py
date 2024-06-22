@@ -279,8 +279,15 @@ class Test(unittest.TestCase):
         mock_validate_user.return_value = True
 
         self.assertEqual(app.lambda_handler(EVENT, None),
-                            {'statusCode': 500, 'body': '"Error getting secret"'})
+                         {'statusCode': 500, 'body': '"Error getting secret"'})
 
+    @patch('modules.missions.insert_mission.app.validate_user')
+    def test_get_validate_user_exception(self, mock_validate_user):
+
+        mock_validate_user.side_effect = Exception('Error')
+
+        self.assertEqual(app.lambda_handler(EVENT, None),
+                         {'statusCode': 500, 'body': json.dumps("Error")})
 
 
 if __name__ == '__main__':
