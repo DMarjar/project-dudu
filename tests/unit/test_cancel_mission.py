@@ -125,6 +125,7 @@ class TestCancelMission(unittest.TestCase):
     Test class for the validate_user function
         - when user exists
         - when user does not exist
+        - when there is a user internal server error
     """
 
     @patch('modules.missions.cancel_mission.app.get_db_connection')
@@ -157,10 +158,23 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(response, {'statusCode': 404, 'body': '"User not found"'})
 
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_validate_user_internal_server_error(self, mock_get_db_connection):
+        mock_get_db_connection.side_effect = Exception("Database connection error")
+
+        try:
+            app.validate_user(1)
+            response = {'statusCode': 200, 'body': '"User validated successfully"'}
+        except Exception as e:
+            response = {'statusCode': 500, 'body': json.dumps("Internal server error")}
+
+        self.assertEqual(response, {'statusCode': 500, 'body': '"Internal server error"'})
+
     """
     Test class for the cancel_mission function
         - when mission is cancelled successfully
         - when mission not found or user unauthorized to cancel
+        - when there is a mission internal server error
     """
     @patch('modules.missions.cancel_mission.app.get_db_connection')
     def test_cancel_mission_successful(self, mock_get_db_connection):
@@ -195,6 +209,18 @@ class TestCancelMission(unittest.TestCase):
             response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
 
         self.assertEqual(response, {'statusCode': 404, 'body': '"Mission not found or user unauthorized to cancel"'})
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_cancel_mission_internal_server_error(self, mock_get_db_connection):
+        mock_get_db_connection.side_effect = Exception("Database connection error")
+
+        try:
+            app.cancel_mission(1, 1)
+            response = {'statusCode': 200, 'body': '"Mission cancelled successfully"'}
+        except Exception as e:
+            response = {'statusCode': 500, 'body': json.dumps("Internal server error")}
+
+        self.assertEqual(response, {'statusCode': 500, 'body': '"Internal server error"'})
 
 
 if __name__ == '__main__':
