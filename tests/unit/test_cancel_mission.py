@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch, MagicMock
 from modules.missions.cancel_mission import app
-
+from modules.missions.cancel_mission.common.httpStatusCodeError import HttpStatusCodeError
 
 
 class TestCancelMission(unittest.TestCase):
@@ -120,6 +120,82 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(app.lambda_handler(body_id_user_is_not_int, None),
                          {'statusCode': 400, 'body': '"id_user must be an integer"'})
+
+    """
+    Test class for the validate_user function
+        - when user exists
+        - when user does not exist
+    """
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_validate_user_exists(self, mock_get_db_connection):
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_cursor.fetchall.return_value = [{'id_user': 1}]
+        try:
+            app.validate_user(1)
+            response = {'statusCode': 200, 'body': '"User validated successfully"'}
+        except HttpStatusCodeError as e:
+            response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
+
+        self.assertEqual(response, {'statusCode': 200, 'body': '"User validated successfully"'})
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_validate_user_not_exists(self, mock_get_db_connection):
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_cursor.fetchall.return_value = []
+
+        try:
+            app.validate_user(1)
+            response = {'statusCode': 200, 'body': '"User validated successfully"'}
+        except HttpStatusCodeError as e:
+            response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
+
+        self.assertEqual(response, {'statusCode': 404, 'body': '"User not found"'})
+
+    """
+    Test class for the cancel_mission function
+        - when mission is cancelled successfully
+        - when mission not found or user unauthorized to cancel
+    """
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_cancel_mission_successful(self, mock_get_db_connection):
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        mock_cursor.rowcount = 1
+
+        try:
+            app.cancel_mission(1, 1)
+            response = {'statusCode': 200, 'body': '"Mission cancelled successfully"'}
+        except HttpStatusCodeError as e:
+            response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
+
+        self.assertEqual(response, {'statusCode': 200, 'body': '"Mission cancelled successfully"'})
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_cancel_mission_not_found_or_unauthorized(self, mock_get_db_connection):
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        mock_cursor.rowcount = 0
+
+        try:
+            app.cancel_mission(1, 1)
+            response = {'statusCode': 200, 'body': '"Mission cancelled successfully"'}
+        except HttpStatusCodeError as e:
+            response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
+
+        self.assertEqual(response, {'statusCode': 404, 'body': '"Mission not found or user unauthorized to cancel"'})
+
 
 if __name__ == '__main__':
     unittest.main()
