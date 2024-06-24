@@ -71,6 +71,5 @@ class Test(TestCase):
         self.assertEqual(result['statusCode'], 500)
         self.assertIn('An error occurred: Database error', result['body'])
 
-
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main()  # pragma: no cover
