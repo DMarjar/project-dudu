@@ -1,6 +1,6 @@
 import json
 from pymysql.cursors import DictCursor
-from modules.missions.get_all_missions.common.db_connection import get_db_connection
+from common.db_connection import get_db_connection
 
 
 def lambda_handler(__, ___):
