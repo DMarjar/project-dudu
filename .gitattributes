@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+.idea/aws.xml
+idea/aws.xml
+
+.idea/project-dude.iml
+idea/project-dude.iml
