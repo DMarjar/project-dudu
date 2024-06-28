@@ -40,6 +40,7 @@ class TestCancelMission(unittest.TestCase):
         }
         self.assertEqual(app.lambda_handler(body_mission_succesfully, None),
                          {'statusCode': 200, 'body': '"Mission cancelled successfully"'})
+        print("Request body:", body_mission_succesfully['body'])
 
     """
     Test class for the lambda_handler function
@@ -58,6 +59,7 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(app.lambda_handler(body_no_id_mission, None),
                          {'statusCode': 400, 'body': '"id_mission is required"'})
+        print("Request body:", body_no_id_mission['body'])
 
     def test_id_mission_is_none(self):
         body_id_mission_is_none = {
@@ -69,6 +71,7 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(app.lambda_handler(body_id_mission_is_none, None),
                          {'statusCode': 400, 'body': '"id_mission is required"'})
+        print("Request body:", body_id_mission_is_none['body'])
 
     def test_id_mission_is_not_int(self):
         body_id_mission_is_not_int = {
@@ -80,6 +83,7 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(app.lambda_handler(body_id_mission_is_not_int, None),
                          {'statusCode': 400, 'body': '"id_mission must be an integer"'})
+        print("Request body:", body_id_mission_is_not_int['body'])
 
     """
     Test class for the lambda_handler function
@@ -98,6 +102,7 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(app.lambda_handler(body_no_id_user, None),
                          {'statusCode': 400, 'body': '"id_user is required"'})
+        print("Request body:", body_no_id_user['body'])
 
     def test_id_user_is_none(self):
         body_id_user_is_none = {
@@ -109,6 +114,7 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(app.lambda_handler(body_id_user_is_none, None),
                          {'statusCode': 400, 'body': '"id_user is required"'})
+        print("Request body:", body_id_user_is_none['body'])
 
     def test_id_user_is_not_int(self):
         body_id_user_is_not_int = {
@@ -120,6 +126,7 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(app.lambda_handler(body_id_user_is_not_int, None),
                          {'statusCode': 400, 'body': '"id_user must be an integer"'})
+        print("Request body:", body_id_user_is_not_int['body'])
 
     """
     Test class for the validate_user function
@@ -142,6 +149,8 @@ class TestCancelMission(unittest.TestCase):
             response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
 
         self.assertEqual(response, {'statusCode': 200, 'body': '"User validated successfully"'})
+        print("Request body:", response['body'])
+
     @patch('modules.missions.cancel_mission.app.get_db_connection')
     def test_validate_user_not_exists(self, mock_get_db_connection):
         mock_conn = MagicMock()
@@ -157,6 +166,7 @@ class TestCancelMission(unittest.TestCase):
             response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
 
         self.assertEqual(response, {'statusCode': 404, 'body': '"User not found"'})
+        print("Request body:", response['body'])
 
     @patch('modules.missions.cancel_mission.app.get_db_connection')
     def test_validate_user_internal_server_error(self, mock_get_db_connection):
@@ -169,6 +179,7 @@ class TestCancelMission(unittest.TestCase):
             response = {'statusCode': 500, 'body': json.dumps("Internal server error")}
 
         self.assertEqual(response, {'statusCode': 500, 'body': '"Internal server error"'})
+        print("Request body:", response['body'])
 
     """
     Test class for the cancel_mission function
@@ -192,6 +203,7 @@ class TestCancelMission(unittest.TestCase):
             response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
 
         self.assertEqual(response, {'statusCode': 200, 'body': '"Mission cancelled successfully"'})
+        print("Request body:", response['body'])
 
     @patch('modules.missions.cancel_mission.app.get_db_connection')
     def test_cancel_mission_not_found_or_unauthorized(self, mock_get_db_connection):
@@ -209,6 +221,7 @@ class TestCancelMission(unittest.TestCase):
             response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
 
         self.assertEqual(response, {'statusCode': 404, 'body': '"Mission not found or user unauthorized to cancel"'})
+        print("Request body:", response['body'])
 
     @patch('modules.missions.cancel_mission.app.get_db_connection')
     def test_cancel_mission_internal_server_error(self, mock_get_db_connection):
@@ -221,6 +234,7 @@ class TestCancelMission(unittest.TestCase):
             response = {'statusCode': 500, 'body': json.dumps("Internal server error")}
 
         self.assertEqual(response, {'statusCode': 500, 'body': '"Internal server error"'})
+        print("Request body:", response['body'])
 
 
 if __name__ == '__main__':
