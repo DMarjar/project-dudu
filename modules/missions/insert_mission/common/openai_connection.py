@@ -44,6 +44,8 @@ def get_openai_client(original_description):
         return response.choices[0].message.content
     except ClientError:
         raise HttpStatusCodeError(500, "Error getting openai client")
+    except Exception:
+        raise HttpStatusCodeError(500, "Error getting openai client")
 
 
 # function to get secret from secrets manager
@@ -66,5 +68,4 @@ def get_secret():
         raise HttpStatusCodeError(500, "Error getting secret")
 
     secret = get_secret_value_response['SecretString']
-
     return json.loads(secret)

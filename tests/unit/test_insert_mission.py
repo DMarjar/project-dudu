@@ -260,12 +260,40 @@ class Test(unittest.TestCase):
 
     """
     Test class for the lambda_handler function
-        on the case where the get_secret function on the openai_connection module raises an exception
+        on the case where the validate_user function
+    """
+    @patch('modules.missions.insert_mission.app.insert_mission')
+    @patch('modules.missions.insert_mission.app.get_openai_client')
+    @patch('modules.missions.insert_mission.app.get_db_connection')
+    def test_validate_user_success(self, mock_get_db_connection, mock_get_openai_client, mock_insert_mission):
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+
+        # Configurar el mock de la conexión para devolver el mock del cursor
+        mock_get_db_connection.return_value = mock_connection
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+        # Configurar el mock del cursor para devolver filas simuladas
+        mock_cursor.fetchall.return_value = [{'id_user': 1, 'name': 'John Doe'}]
+
+        mock_get_openai_client.return_value = 'fantasy description'
+        mock_insert_mission.return_value = True
+
+        self.assertEqual(app.lambda_handler(EVENT, None),
+                         {'statusCode': 200, 'body': '"Mission inserted successfully"'})
+
+
+
+    """
+    Test class for the lambda_handler function
+        on 
+        -the case where the get_secret function on the openai_connection module raises an exception
+        -the case where the get_openai_client function on the openai_connection module raises an exception
     """
 
     @patch('modules.missions.insert_mission.app.validate_user')
     @patch('modules.missions.insert_mission.common.db_connection.get_secrets')
-    def test_get_openai_client_exception(self, mock_get_secrets, mock_validate_user):
+    def test_get_secrets_openai_client_exception(self, mock_get_secrets, mock_validate_user):
         mock_get_secrets.return_value = {
             'username': 'admin',
             'password': 'admin',
@@ -281,6 +309,21 @@ class Test(unittest.TestCase):
         self.assertEqual(app.lambda_handler(EVENT, None),
                          {'statusCode': 500, 'body': '"Error getting secret"'})
 
+    @patch('modules.missions.insert_mission.common.openai_connection.get_secret')
+    @patch('modules.missions.insert_mission.app.validate_user')
+    def test_get_openai_client_exception(self, mock_validate_user, mock_openai_get_secret):
+        mock_validate_user.return_value = True
+
+        mock_openai_get_secret.return_value = {
+            'OPENAI_KEY': 'admin'
+        }
+        self.assertEqual(app.lambda_handler(EVENT, None),
+                         {'statusCode': 500, 'body': '"Error getting openai client"'})
+
+    """"
+        Test class for the lambda_handler function
+        of practice
+    """
     @patch('modules.missions.insert_mission.app.validate_user')
     def test_get_validate_user_exception(self, mock_validate_user):
 
@@ -288,6 +331,26 @@ class Test(unittest.TestCase):
 
         self.assertEqual(app.lambda_handler(EVENT, None),
                          {'statusCode': 500, 'body': json.dumps("Error")})
+
+    """
+    Test class for the lambda_handler function
+        on the case where the insert_mission function is successful
+    """
+    @patch('modules.missions.insert_mission.app.get_db_connection')
+    @patch('modules.missions.insert_mission.app.get_openai_client')
+    @patch('modules.missions.insert_mission.app.validate_user')
+    def test_insert_mission_success(self, mock_validate_user, mock_get_openai_client, mock_get_db_connection):
+        mock_validate_user.return_value = True
+        mock_get_openai_client.return_value = 'fantasy description'
+
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+
+        mock_get_db_connection.return_value = mock_connection
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+        self.assertEqual(app.lambda_handler(EVENT, None),
+                         {'statusCode': 200, 'body': '"Mission inserted successfully"'})
 
 
 if __name__ == '__main__':

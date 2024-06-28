@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
-from modules.missions.insert_mission.common.db_connection import get_db_connection
-from modules.missions.insert_mission.common.openai_connection import get_openai_client
-from modules.missions.insert_mission.common.httpStatusCodeError import HttpStatusCodeError
+from .common.db_connection import get_db_connection
+from .common.openai_connection import get_openai_client
+from .common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
