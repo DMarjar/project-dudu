@@ -10,17 +10,14 @@ def lambda_handler(__, ___):
         dict: A dictionary that contains the status code
               and a list of missions or a message if no missions are found
     """
-
     try:
         missions = get_all_missions()
-
         if not missions:
             response = {
                 'statusCode': 204,
                 'body': json.dumps("No missions found")
             }
             return response
-
         response = {
             'statusCode': 200,
             'body': json.dumps(missions)
