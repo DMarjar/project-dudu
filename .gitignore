@@ -248,4 +248,8 @@ $RECYCLE.BIN/
 
 */build/*
 
+.idea/aws.xml
+.idea/misc.xml
+.idea/project-dudu.iml
+
 # End of https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode
