@@ -85,6 +85,23 @@ Resources:
             Path: /get_one_mission/{id_mission}
             Method: get
 
+  RecoverPasswordFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/recover_password/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetOneMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /recover_password/
+            Method: post
+
   CompleteMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -142,6 +159,12 @@ Resources:
       Name: MissionApi
       StageName: Prod
 
+  UsersApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: UsersApi
+      StageName: Prod
+
 Outputs:
   LambdaExecutionRoleArn:
     Description: "Implicit IAM Role created for Lambda function"
@@ -153,6 +176,9 @@ Outputs:
   GetOneMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
+  RecoverPasswordApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Recover Password function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/recover_password/"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
@@ -175,6 +201,9 @@ Outputs:
   GetOneMissionFunctionArn:
     Description: "Get One Mission Lambda Function ARN"
     Value: !GetAtt GetOneMissionFunction.Arn
+  RecoverPasswordFunctionArn:
+    Description: "Recover Password Lambda Function ARN"
+    Value: !GetAtt RecoverPasswordFunction.Arn
   CompleteMissionFunctionArn:
     Description: "Complete Mission Lambda Function ARN"
     Value: !GetAtt CompleteMissionFunction.Arn
