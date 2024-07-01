@@ -120,6 +120,23 @@ Resources:
             Path: /cancel_mission
             Method: put
 
+  SearchMissionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/search_mission/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        SearchMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /search_mission
+            Method: post
+  
   RegisterUserFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -169,6 +186,9 @@ Outputs:
   InsertMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Insert Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_mission/"
+  SearchMissionApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Search Mission function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/search_mission/"
 
   RegisterUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Register User function"
@@ -190,7 +210,12 @@ Outputs:
   CancelMissionFunctionArn:
     Description: "Cancel Mission Lambda Function ARN"
     Value: !GetAtt CancelMissionFunction.Arn
+  SearchMissionFunctionArn:
+    Description: "Search Mission Lambda Function ARN"
+    Value: !GetAtt SearchMissionFunction.Arn
+
 
   RegisterUserFunctionArn:
     Description: "Register User Lambda Function ARN"
     Value: !GetAtt RegisterUserFunction.Arn
+
