@@ -1,12 +1,14 @@
 import json
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
 from modules.users.delete_user_profile.common.db_connection import get_db_connection
 from modules.users.delete_user_profile.common.httpStatusCodeError import HttpStatusCodeError
 
 def lambda_handler(event, context):
-    """ This function deletes a user profile and related data from the database
+    """ This function deletes a user profile and related data from the database and AWS Cognito
 
     event (dict): The event parameter is a dictionary that contains the following attributes:
-        - body (str): The JSON string containing 'username' and other necessary attributes
+        - body (str): The JSON string containing 'id' and other necessary attributes
 
     context (object): The context parameter is an object provided by AWS Lambda
 
@@ -20,7 +22,13 @@ def lambda_handler(event, context):
         # Validate payload
         validate_body(body)
 
-        # Delete user profile
+        # Get secrets to delete the user on AWS Cognito
+        secrets = get_secret()
+
+        # Delete user profile from AWS Cognito
+        delete_user_cognito(body['username'], secrets)
+
+        # Delete user profile from DB
         delete_user_profile(body['id'])
 
         response = {
@@ -42,27 +50,70 @@ def lambda_handler(event, context):
 def validate_body(body):
     """ This function validates the payload"""
 
-    # Validate username
+    # Validate id
     if 'id' not in body:
         raise HttpStatusCodeError(400, "Id is required")
-
     if not isinstance(body['id'], int) or body['id'] is None:
         raise HttpStatusCodeError(400, "Id must be a non-empty int")
+
+    # Validate username
+    if 'username' not in body:
+        raise HttpStatusCodeError(400, "Username is required")
+    if body['username'] is None:
+        raise HttpStatusCodeError(400, "Username is required")
+    if not isinstance(body['username'], str):
+        raise HttpStatusCodeError(400, "Username must be a string")
 
     return True
 
 
-# Delete user profile by id_user
-def delete_user_profile(id):
-    """ This function deletes a user profile and related data from the database by id_user
+def get_secret():
+    secret_name = "users_pool/client_secret"
+    region_name = "us-east-2"
 
-    id_user (int): The id_user of the user to be deleted
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+    except NoCredentialsError as e:
+        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+
+    secret = get_secret_value_response['SecretString']
+    return json.loads(secret)
+
+
+def delete_user_cognito(username, secrets):
+    client = boto3.client('cognito-idp', region_name='us-east-2')
+    user_pool_id = secrets['USER_POOL_ID']
+
+    try:
+        client.admin_delete_user(
+            UserPoolId=user_pool_id,
+            Username=username
+        )
+    except ClientError as e:
+        raise HttpStatusCodeError(500, f"Error deleting user from Cognito -> {str(e)}")
+
+
+# Delete user profile by id
+def delete_user_profile(id):
+    """ This function deletes a user profile and related data from the database by id
+
+    id (int): The id of the user to be deleted
 
     Returns:
         bool: True if user profile deletion is successful
     """
 
-    connection = get_db_connection()  # Asegúrate de obtener la conexión a la base de datos
+    connection = get_db_connection()
 
     try:
         with connection.cursor() as cursor:
