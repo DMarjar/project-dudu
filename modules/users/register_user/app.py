@@ -145,7 +145,7 @@ def save_user_cognito(body, secrets):
             },
             {
                 'Name': 'email_verified',
-                'Value': 'True'
+                'Value': 'true'
             }
         ],
         TemporaryPassword=body['password']
