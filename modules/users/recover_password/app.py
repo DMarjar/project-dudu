@@ -3,7 +3,11 @@ import json
 import hmac
 import hashlib
 import base64
+import logging
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def get_secret_hash(username, client_id, client_secret):
@@ -12,14 +16,38 @@ def get_secret_hash(username, client_id, client_secret):
     return base64.b64encode(dig).decode()
 
 
+def get_secret():
+    secret_name = "users_pool/client_secret"
+    region_name = "us-east-2"
+
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        logger.info(f"Attempting to retrieve secret '{secret_name}'...")
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        raise e
+
+    secret = get_secret_value_response['SecretString']
+    logger.info(f"Successfully retrieved secret '{secret_name}'.")
+
+    return json.loads(secret)
+
+
 def lambda_handler(event, context):
     client = boto3.client('cognito-idp')
-    secrets = get_secrets()
+    secret = get_secret()
 
     body = json.loads(event['body'])
     username = body['username']
     client_id = '4iid9n3o306aorf0imcs0dcplo'
-    client_secret = secrets['client_secret']
+    client_secret = secret['SECRET_CLIENT']
 
     secret_hash = get_secret_hash(username, client_id, client_secret)
 
@@ -43,25 +71,3 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': json.dumps('An error occurred: ' + str(e))
         }
-
-
-def get_secrets():
-    secret_name = "users_pool/client_secret"
-    region_name = "us-east-2"
-
-    session = boto3.session.Session()
-    client = session.client(
-        service_name='secretsmanager',
-        region_name=region_name
-    )
-
-    try:
-        get_secret_value_response = client.get_secret_value(
-            SecretId=secret_name
-        )
-    except ClientError as e:
-        raise e
-
-    secret = get_secret_value_response['SecretString']
-
-    return json.loads(secret)
