@@ -120,8 +120,8 @@ def search_mission(body):
         with connection.cursor(DictCursor) as cursor:
             sql = ("SELECT * FROM missions "
                    "WHERE id_user=%s "
-                   "AND original_description LIKE %s "
-                   "OR fantasy_description LIKE %s "
+                   "AND (original_description LIKE %s "
+                   "OR fantasy_description LIKE %s) "
                    "AND status=%s "
                    "ORDER BY %s %s")
             cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
