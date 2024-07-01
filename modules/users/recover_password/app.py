@@ -1,21 +1,6 @@
-import hmac
 import boto3
-import hashlib
 import json
-import base64
-from secrets_manager import get_secret_value
-
-
-def get_secret_hash(username, client_id, client_secret):
-    message = username + client_id
-    dig = hmac.new(client_secret.encode('utf-8'), message.encode('utf-8'), hashlib.sha256).digest()
-    return base64.b64encode(dig).decode()
-
-
-def get_secret():
-    secret_name = "users_pool/client_secret"
-    secret = get_secret_value(secret_name)
-    return secret
+from common_functions import get_secret, get_secret_hash
 
 
 def lambda_handler(event, context):
