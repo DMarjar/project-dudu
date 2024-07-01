@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 from modules.missions.cancel_mission import app
 from modules.missions.cancel_mission.common.httpStatusCodeError import HttpStatusCodeError
 
+
 class TestCancelMission(unittest.TestCase):
 
     @staticmethod
@@ -15,6 +16,11 @@ class TestCancelMission(unittest.TestCase):
             print("Response Body:", body)
         else:
             print("No body found in response")
+
+    """
+    Test class for the lambda_handler function on the case is successful
+    
+    """
 
     @patch('modules.missions.cancel_mission.app.cancel_mission')
     @patch('modules.missions.cancel_mission.app.validate_user')
@@ -43,6 +49,13 @@ class TestCancelMission(unittest.TestCase):
         self.assertEqual(response, {'statusCode': 200, 'body': '"Mission cancelled successfully"'})
         self.print_response(response)
         print("Request body:", body_mission_successfully['body'])
+
+    """
+    Test class for the lambda_handler function on:
+        -the case where the id_mission is not in the body
+        -the case where the id_mission is None
+        -the case where the id_mission is not int     
+    """
 
     def test_no_id_mission(self):
         body_no_id_mission = {
@@ -82,6 +95,13 @@ class TestCancelMission(unittest.TestCase):
         self.print_response(response)
         print("Request body:", body_id_mission_is_not_int['body'])
 
+    """
+    Test class for the lambda_handler function on:
+            -the case where the id_user is not in the body
+            -the case where the id_user is None
+            -the case where the id_user is not int
+    """
+
     def test_no_id_user(self):
         body_no_id_user = {
             'body': json.dumps({
@@ -119,6 +139,13 @@ class TestCancelMission(unittest.TestCase):
         self.assertEqual(response, {'statusCode': 400, 'body': '"id_user must be an integer"'})
         self.print_response(response)
         print("Request body:", body_id_user_is_not_int['body'])
+
+    """
+    Test class for the validate_user function
+        - when user exists
+        - when user does not exist
+        - when there is a user internal server error
+    """
 
     @patch('modules.missions.cancel_mission.app.get_db_connection')
     def test_validate_user_exists(self, mock_get_db_connection):
@@ -170,6 +197,12 @@ class TestCancelMission(unittest.TestCase):
         self.print_response(response)
         print("Request body:", response['body'])
 
+    """
+    Test class for the cancel_mission function
+        - when mission is cancelled successfully
+        - when mission not found or user unauthorized to cancel
+        - when there is a mission internal server error
+    """
     @patch('modules.missions.cancel_mission.app.get_db_connection')
     def test_cancel_mission_successful(self, mock_get_db_connection):
         mock_conn = MagicMock()
