@@ -7,6 +7,7 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
 from .common.httpStatusCodeError import HttpStatusCodeError
+from .common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
@@ -20,18 +21,20 @@ def lambda_handler(event, ___):
         body['password'] = password
 
         # Get secrets to save the user on AWS Cognito
-        # secrets = get_secret()
-        secrets = {
-            'USER_POOL_ID': 'us-east-2_bjlyJabGh',
-            'ID_CLIENT': '4iid9n3o306aorf0imcs0dcplo'
-        }
+        secrets = get_secret()
 
         # Save user on AWS Cognito
-        body = save_user_cognito(body, secrets)
+        id_user = save_user_cognito(body, secrets)
+
+        # Save user on DB
+        save_user_db(id_user, body['gender'])
+
+        # Give basic rewards
+        give_basic_rewards(id_user)
 
         response = {
             'statusCode': 200,
-            'body': json.dumps(body)
+            'body': json.dumps("User registered successfully")
         }
 
     except Exception as e:
@@ -124,7 +127,8 @@ def get_secret():
     except NoCredentialsError as e:
         raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
 
-    return get_secret_value_response['SecretString']
+    secret = get_secret_value_response['SecretString']
+    return json.loads(secret)
 
 
 def save_user_cognito(body, secrets):
@@ -138,12 +142,43 @@ def save_user_cognito(body, secrets):
             {
                 'Name': 'email',
                 'Value': body['email']
+            },
+            {
+                'Name': 'email_verified',
+                'Value': 'True'
             }
         ],
         TemporaryPassword=body['password']
     )
 
-    return response
+    return response['User']['Attributes'][2]['Value']
 
 
+def save_user_db(id_user, gender):
+    connection = get_db_connection()
 
+    try:
+        with connection.cursor() as cursor:
+            sql = "INSERT INTO users (id_user, gender) VALUES (%s, %s)"
+            cursor.execute(sql, (id_user, gender))
+        connection.commit()
+    except Exception as e:
+        raise HttpStatusCodeError(500, "Error inserting user")
+    finally:
+        connection.close()
+    return True
+
+
+def give_basic_rewards(id_user):
+    connection = get_db_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "INSERT INTO user_rewards (id_user, id_reward) VALUES (%s, 1)"
+            cursor.execute(sql, id_user)
+        connection.commit()
+    except Exception as e:
+        raise HttpStatusCodeError(500, "Error giving basic rewards")
+    finally:
+        connection.close()
+    return True
