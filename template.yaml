@@ -102,6 +102,23 @@ Resources:
             Path: /recover_password/
             Method: post
 
+  ChangePasswordFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/change_password/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetOneMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /change_password/
+            Method: post
+
   CompleteMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -197,6 +214,9 @@ Outputs:
   RecoverPasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Recover Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/recover_password/"
+  ChangePasswordApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Change Password function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/change_password/"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
@@ -227,6 +247,9 @@ Outputs:
   RecoverPasswordFunctionArn:
     Description: "Recover Password Lambda Function ARN"
     Value: !GetAtt RecoverPasswordFunction.Arn
+  ChangePasswordFunctionArn:
+    Description: "Change Password Lambda Function ARN"
+    Value: !GetAtt ChangePasswordFunction.Arn
   CompleteMissionFunctionArn:
     Description: "Complete Mission Lambda Function ARN"
     Value: !GetAtt CompleteMissionFunction.Arn
