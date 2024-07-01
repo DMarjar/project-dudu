@@ -125,6 +125,54 @@ Resources:
       Name: MissionApi
       StageName: Prod
 
+
+
+
+
+
+  DeleteUserProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/delete_user_profile/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        CancelMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /delete_user_profile
+            Method: delete
+
+  UsersApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: UsersApi
+      StageName: Prod
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Outputs:
   LambdaExecutionRoleArn:
     Description: "Implicit IAM Role created for Lambda function"
@@ -146,6 +194,11 @@ Outputs:
     Description: "API Gateway endpoint URL for Prod stage for Insert Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_mission/"
 
+
+  DeleteUserProfileApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Delete User Profile function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/delete_user_profile/"
+
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
     Value: !GetAtt GetAllMissionsFunction.Arn
@@ -161,3 +214,8 @@ Outputs:
   CancelMissionFunctionArn:
     Description: "Cancel Mission Lambda Function ARN"
     Value: !GetAtt CancelMissionFunction.Arn
+
+
+  DeleteUserProfileFunctionArn:
+    Description: "Delete User Profile Lambda Function ARN"
+    Value: !GetAtt DeleteUserProfileFunction.Arn
