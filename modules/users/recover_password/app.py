@@ -3,11 +3,7 @@ import json
 import hmac
 import hashlib
 import base64
-import logging
 from botocore.exceptions import ClientError
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 
 def get_secret_hash(username, client_id, client_secret):
@@ -27,7 +23,6 @@ def get_secret():
     )
 
     try:
-        logger.info(f"Attempting to retrieve secret '{secret_name}'...")
         get_secret_value_response = client.get_secret_value(
             SecretId=secret_name
         )
@@ -35,7 +30,6 @@ def get_secret():
         raise e
 
     secret = get_secret_value_response['SecretString']
-    logger.info(f"Successfully retrieved secret '{secret_name}'.")
 
     return json.loads(secret)
 
@@ -49,22 +43,39 @@ def lambda_handler(event, context):
     client_id = '4iid9n3o306aorf0imcs0dcplo'
     client_secret = secret['SECRET_CLIENT']
 
-    secret_hash = get_secret_hash(username, client_id, client_secret)
-
     try:
-        response = client.forgot_password(
-            ClientId=client_id,
-            Username=username,
-            SecretHash=secret_hash
+        user = client.admin_get_user(
+            UserPoolId='us-east-2_bjlyJabGh',
+            Username=username
         )
-        return {
-            'statusCode': 200,
-            'body': json.dumps('Password recovery initiated successfully.')
-        }
+        email = next((attr['Value'] for attr in user['UserAttributes'] if attr['Name'] == 'email'), None)
+        secret_hash = get_secret_hash(email, client_id, client_secret)
+        if not email:
+            return {
+                'statusCode': 404,
+                'body': json.dumps('User email not found.')
+            }
     except client.exceptions.UserNotFoundException:
         return {
             'statusCode': 404,
             'body': json.dumps('User not found.')
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps('An error occurred while checking user existence: ' + str(e))
+        }
+
+    # Iniciar recuperación de contraseña
+    try:
+        response = client.forgot_password(
+            ClientId=client_id,
+            Username=email,
+            SecretHash=secret_hash
+        )
+        return {
+            'statusCode': 200,
+            'body': json.dumps(response['CodeDeliveryDetails'])
         }
     except Exception as e:
         return {
