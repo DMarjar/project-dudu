@@ -252,3 +252,4 @@ $RECYCLE.BIN/
 .idea/aws.xml
 .idea/misc.xml
 .idea/project-dudu.iml
+.idea/sqldialects.xml
