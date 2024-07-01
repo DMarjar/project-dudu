@@ -98,7 +98,7 @@ Resources:
         GetOneMission:
           Type: Api
           Properties:
-            RestApiId: !Ref MissionApi
+            RestApiId: !Ref UsersApi
             Path: /recover_password/
             Method: post
 
@@ -188,7 +188,7 @@ Outputs:
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
   RecoverPasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Recover Password function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/recover_password/"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/recover_password/"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
