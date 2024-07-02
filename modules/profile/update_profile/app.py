@@ -1,5 +1,6 @@
 import json
-from modules.missions.complete_mission.common.db_connection import get_db_connection
+from common.db_connection import get_db_connection
+
 
 def lambda_handler(event, __):
     try:
@@ -11,25 +12,28 @@ def lambda_handler(event, __):
             }
             return response
 
-        id_mission = body.get('id_mission')
+        profile_id = body.get('id_profile')
+        name = body.get('name')
+        email = body.get('email')
+        username = body.get('username')
 
-        if id_mission is None:
+        if profile_id is None:
             response = {
                 'statusCode': 402,
-                'body': json.dumps({"message": "Bad request: id of mission is required"})
+                'body': json.dumps({"message": "Bad request: id is required"})
             }
             return response
 
-        if isinstance(id_mission, int):
-            update_mission_status(id_mission, 'completed')
+        if isinstance(profile_id, int):
+            update_profile(profile_id, name, email, username )
             response = {
                 'statusCode': 200,
-                'body': json.dumps({"message": f"Mission {id_mission} completed successfully"})
+                'body': json.dumps({"message": f"Profile update successfully"})
             }
         else:
             response = {
                 'statusCode': 404,
-                'body': json.dumps({"message": "Mission not found"})
+                'body': json.dumps({"message": "profile not updated"})
             }
 
     except Exception as e:
@@ -40,15 +44,13 @@ def lambda_handler(event, __):
     return response
 
 
-def update_mission_status(id_mission, status):
+def update_profile(profile_id, name, email, username):
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
             # Actualiza el estado de la misión
-            sql_update = "UPDATE missions SET status = %s WHERE id_mission = %s"
-            cursor.execute(sql_update, (status, id_mission))
+            sql_update = "UPDATE users SET name, email, username = %s WHERE profile_id = %s"
+            cursor.execute(sql_update, (name, email, username, profile_id))
             connection.commit()
     finally:
         connection.close()
-
-

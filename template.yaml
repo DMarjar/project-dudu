@@ -118,6 +118,39 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /change_password/
             Method: post
+  GetProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/profile/get_profile
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetOneMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UserAPI
+            Path: /get_profile
+            Method: get
+
+  UpdateProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/profile/update_profile/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        CancelMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UserAPI
+            Path: /update_profile
+            Method: put
 
   CompleteMissionFunction:
     Type: AWS::Serverless::Function
@@ -211,12 +244,18 @@ Outputs:
   GetOneMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
+  GetProfileApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Get Profile function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_profile/"
   RecoverPasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Recover Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/recover_password/"
   ChangePasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Change Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/change_password/"
+  UpdateProfileApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Update Profile function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_profile/"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
@@ -247,6 +286,12 @@ Outputs:
   RecoverPasswordFunctionArn:
     Description: "Recover Password Lambda Function ARN"
     Value: !GetAtt RecoverPasswordFunction.Arn
+  GetProfileFunctionArn:
+    Description: "Get Profile Lambda Function ARN"
+    Value: !GetAtt GetProfileFunction.Arn
+  UpdateProfileFunctionArn:
+    Description: "Update Profile Lambda Function ARN"
+    Value: !GetAtt UpdateProfileFunction.Arn
   ChangePasswordFunctionArn:
     Description: "Change Password Lambda Function ARN"
     Value: !GetAtt ChangePasswordFunction.Arn
