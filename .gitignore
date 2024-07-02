@@ -59,6 +59,9 @@ Temporary Items
 .idea/**/dataSources.local.xml
 .idea/**/sqlDataSources.xml
 .idea/**/dynamic.xml
+.idea/**/aws.xml
+.idea/**/misc.xml
+
 .idea/**/uiDesigner.xml
 
 # .idea files
@@ -249,6 +252,7 @@ $RECYCLE.BIN/
 */build/*
 
 # End of https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode
+.idea/project-dudu.iml
+.gitignore
 .idea/aws.xml
 .idea/misc.xml
-.idea/project-dudu.iml
