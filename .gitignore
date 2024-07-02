@@ -256,3 +256,5 @@ $RECYCLE.BIN/
 .gitignore
 .idea/aws.xml
 .idea/misc.xml
+.idea/sqldialects.xml
+.idea/inspectionProfiles/profiles_settings.xml

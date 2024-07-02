@@ -1,4 +1,8 @@
 import json
+
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
+
 from common.db_connection import get_db_connection
 from pymysql.cursors import DictCursor
 from common.httpStatusCodeError import HttpStatusCodeError
@@ -29,9 +33,23 @@ def lambda_handler(event, __):
         # Search missions
         missions = search_mission(body)
 
+        secrets = get_secret()
+        client = boto3.client('cognito-idp', region_name='us-east-2')
+        user_pool_id = secrets['USER_POOL_ID']
+        roles = client.admin_list_groups_for_user(
+            UserPoolId=user_pool_id,
+            Username=body['username']
+        )
+
+        role = roles['Groups'][0]['GroupName']
+        body = {
+            'role': role,
+            'missions': missions
+        }
+
         response = {
             'statusCode': 200,
-            'body': json.dumps(missions)
+            'body': json.dumps(body)
         }
 
     except HttpStatusCodeError as e:
@@ -130,3 +148,26 @@ def search_mission(body):
             return missions
     finally:
         connection.close()
+
+
+def get_secret():
+    secret_name = "users_pool/client_secret"
+    region_name = "us-east-2"
+
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+    except NoCredentialsError as e:
+        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+
+    secret = get_secret_value_response['SecretString']
+    return json.loads(secret)
