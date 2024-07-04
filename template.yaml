@@ -85,6 +85,40 @@ Resources:
             Path: /get_one_mission/{id_mission}
             Method: get
 
+  RecoverPasswordFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/recover_password/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetOneMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /recover_password/
+            Method: post
+
+  ChangePasswordFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/change_password/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetOneMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /change_password/
+            Method: post
+
   CompleteMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -101,7 +135,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /complete_mission
             Method: put
-      
+
+
   CancelMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -119,10 +154,50 @@ Resources:
             Path: /cancel_mission
             Method: put
 
+  SearchMissionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/search_mission/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        SearchMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /search_mission
+            Method: post
+  
+  RegisterUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/register_user/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        RegisterUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /register_user
+            Method: post
+
   MissionApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: MissionApi
+      StageName: Prod
+
+  UsersApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: UsersApi
       StageName: Prod
 
 Outputs:
@@ -136,6 +211,12 @@ Outputs:
   GetOneMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
+  RecoverPasswordApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Recover Password function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/recover_password/"
+  ChangePasswordApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Change Password function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/change_password/"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
@@ -145,6 +226,14 @@ Outputs:
   InsertMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Insert Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/insert_mission/"
+  SearchMissionApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Search Mission function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/search_mission/"
+
+  RegisterUserApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Register User function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_user/"
+
 
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
@@ -155,9 +244,24 @@ Outputs:
   GetOneMissionFunctionArn:
     Description: "Get One Mission Lambda Function ARN"
     Value: !GetAtt GetOneMissionFunction.Arn
+  RecoverPasswordFunctionArn:
+    Description: "Recover Password Lambda Function ARN"
+    Value: !GetAtt RecoverPasswordFunction.Arn
+  ChangePasswordFunctionArn:
+    Description: "Change Password Lambda Function ARN"
+    Value: !GetAtt ChangePasswordFunction.Arn
   CompleteMissionFunctionArn:
     Description: "Complete Mission Lambda Function ARN"
     Value: !GetAtt CompleteMissionFunction.Arn
   CancelMissionFunctionArn:
     Description: "Cancel Mission Lambda Function ARN"
     Value: !GetAtt CancelMissionFunction.Arn
+  SearchMissionFunctionArn:
+    Description: "Search Mission Lambda Function ARN"
+    Value: !GetAtt SearchMissionFunction.Arn
+
+
+  RegisterUserFunctionArn:
+    Description: "Register User Lambda Function ARN"
+    Value: !GetAtt RegisterUserFunction.Arn
+
