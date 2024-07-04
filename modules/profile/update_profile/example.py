@@ -23,13 +23,6 @@ def lambda_handler(event, __):
             }
             return response
 
-        if profile_id is None:
-            response = {
-                'statusCode': 402,
-                'body': json.dumps({"message": "Bad request: ID is required"})
-            }
-            return response
-
         if not profile_id.strip():
             response = {
                 'statusCode': 402,
@@ -56,8 +49,13 @@ def lambda_handler(event, __):
             }
 
         combined_data = {
-            "cognito_data": cognito_data,
-            "profile_data": profile
+            "cognito_data": {
+                "username": cognito_data.get('username', ''),
+                "email": cognito_data.get('email', '')
+            },
+            "profile_data": {
+                "gender": profile.get('gender', ''),
+            }
         }
 
         response = {
@@ -98,29 +96,16 @@ def get_profile(user_id):
     try:
         with connection.cursor() as cursor:
             sql = """
-                SELECT u.id_user, u.level, u.current_xp, u.gender,
-                       r.id_reward, r.image_wizard, r.image_sorceress, r.unlock_level
+                SELECT u.gender
                 FROM users u
-                LEFT JOIN rewards r ON u.level >= r.unlock_level
                 WHERE u.id_user = %s
             """
             cursor.execute(sql, (user_id,))
-            rows = cursor.fetchall()
-            if rows:
-                profile_data = []
-                for row in rows:
-                    profile_data.append({
-                        "id_user": row['id_user'],
-                        "level": row['level'],
-                        "current_xp": row['current_xp'],
-                        "gender": row['gender'],
-                        "rewards": {
-                            "id_reward": row['id_reward'],
-                            "image_wizard": row['image_wizard'],
-                            "image_sorceress": row['image_sorceress'],
-                            "unlock_level": row['unlock_level']
-                        }
-                    })
+            row = cursor.fetchone()
+            if row:
+                profile_data = {
+                    "gender": row['gender']
+                }
                 return profile_data
             else:
                 return None
