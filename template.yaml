@@ -188,6 +188,22 @@ Resources:
             Path: /register_user
             Method: post
 
+  SetPasswordFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/set_password/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        SetPassword:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /set_password
+            Method: post
 
   MissionApi:
     Type: AWS::Serverless::Api
@@ -234,6 +250,9 @@ Outputs:
   RegisterUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Register User function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_user/"
+  SetPasswordApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Set Password function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/set_password/"
 
 
   GetAllMissionsFunctionArn:
@@ -265,4 +284,7 @@ Outputs:
   RegisterUserFunctionArn:
     Description: "Register User Lambda Function ARN"
     Value: !GetAtt RegisterUserFunction.Arn
+  SetPasswordFunctionArn:
+    Description: "Set Password Lambda Function ARN"
+    Value: !GetAtt SetPasswordFunction.Arn
 
