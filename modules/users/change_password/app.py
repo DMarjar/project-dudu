@@ -48,7 +48,7 @@ def lambda_handler(event, context):
     except client.exceptions.InvalidPasswordException as e:
         return {
             'statusCode': 400,
-            'body': json.dumps(f'Invalid password: {e.response["Error"]["Message"]}')
+            'body': json.dumps(f'Invalid password: {str(e)}')
         }
     except client.exceptions.UserNotFoundException:
         return {
