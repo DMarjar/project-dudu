@@ -6,8 +6,8 @@ import random
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from .common.httpStatusCodeError import HttpStatusCodeError
-from .common.db_connection import get_db_connection
+from common.httpStatusCodeError import HttpStatusCodeError
+from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
@@ -139,7 +139,7 @@ def update_user_db(username, gender):
 
     try:
         with connection.cursor() as cursor:
-            sql = "UPDATE users SET gender = %s WHERE username = %s"
+            sql = "UPDATE users SET gender = %s WHERE id = %s"
             cursor.execute(sql, (gender, username))
         connection.commit()
     except Exception as e:
