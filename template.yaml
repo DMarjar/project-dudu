@@ -171,6 +171,7 @@ Resources:
             Path: /register_user
             Method: post
 
+
   MissionApi:
     Type: AWS::Serverless::Api
     Properties:

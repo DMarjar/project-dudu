@@ -142,16 +142,12 @@ def save_user_cognito(body, secrets):
             {
                 'Name': 'email',
                 'Value': body['email']
-            },
-            {
-                'Name': 'email_verified',
-                'Value': 'true'
             }
         ],
         TemporaryPassword=body['password']
     )
 
-    return response['User']['Attributes'][2]['Value']
+    return response['User']['Attributes'][1]['Value']
 
 
 def save_user_db(id_user, gender):

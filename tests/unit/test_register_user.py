@@ -4,8 +4,8 @@ from unittest import TestCase
 
 EVENT = {
     'body': json.dumps({
-        'email': 'emilioetorres99@gmail.com',
-        'username': 'Merlynn',
+        'email': '20213tn105@utez.edu.mx',
+        'username': 'Atoferatofe',
         'gender': 'M'
     })
 }
