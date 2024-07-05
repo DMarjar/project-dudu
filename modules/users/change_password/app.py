@@ -1,6 +1,6 @@
 import boto3
 import json
-from common.common_functions import get_secret, get_secret_hash
+from modules.users.change_password.common.common_functions import get_secret, get_secret_hash
 
 
 def lambda_handler(event, context):
@@ -48,7 +48,7 @@ def lambda_handler(event, context):
     except client.exceptions.InvalidPasswordException as e:
         return {
             'statusCode': 400,
-            'body': json.dumps(f'Invalid password: {e.response["Error"]["Message"]}')
+            'body': json.dumps(f'Invalid password: {str(e)}')
         }
     except client.exceptions.UserNotFoundException:
         return {
