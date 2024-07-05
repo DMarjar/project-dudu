@@ -1,8 +1,5 @@
 import json
 import re
-import string
-import random
-
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
