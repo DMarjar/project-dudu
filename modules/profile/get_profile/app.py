@@ -1,8 +1,8 @@
 import json
 import boto3
-from modules.profile.get_profile.common.db_connection import get_db_connection
+from common.db_connection import get_db_connection
 from botocore.exceptions import ClientError, NoCredentialsError
-from .common.httpStatusCodeError import HttpStatusCodeError
+from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, __):
