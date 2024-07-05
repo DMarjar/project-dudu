@@ -128,10 +128,10 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        GetOneMission:
+        GetProfile:
           Type: Api
           Properties:
-            RestApiId: !Ref UserAPI
+            RestApiId: !Ref UsersApi
             Path: /get_profile
             Method: get
 
@@ -145,10 +145,10 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        CancelMission:
+        UpdateProfile:
           Type: Api
           Properties:
-            RestApiId: !Ref UserAPI
+            RestApiId: !Ref UsersApi
             Path: /update_profile
             Method: put
 
@@ -162,7 +162,7 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        CancelMission:
+        CompleteMission:
           Type: Api
           Properties:
             RestApiId: !Ref MissionApi
@@ -246,7 +246,7 @@ Outputs:
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
   GetProfileApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get Profile function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_profile/"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_profile/"
   RecoverPasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Recover Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/recover_password/"
@@ -255,7 +255,7 @@ Outputs:
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/change_password/"
   UpdateProfileApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Update Profile function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_profile/"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_profile/"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
