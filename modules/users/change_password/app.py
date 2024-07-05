@@ -1,6 +1,6 @@
 import boto3
 import json
-from modules.users.change_password.common.common_functions import get_secret, get_secret_hash
+from common.common_functions import get_secret, get_secret_hash
 
 
 def lambda_handler(event, context):
