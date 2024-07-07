@@ -51,6 +51,23 @@ Resources:
             Path: /get_all_missions
             Method: get
 
+  MissionExpirationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/mission_expiration/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        MissionExpiration:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /mission_expiration
+            Method: post
+
   InsertMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -208,6 +225,9 @@ Outputs:
   GetAllMissionsApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get All Missions function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_all_missions/"
+  MissionExpirationApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Mission Expiration function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mission_expiration/"
   GetOneMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
@@ -229,7 +249,6 @@ Outputs:
   SearchMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Search Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/search_mission/"
-
   RegisterUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Register User function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_user/"
@@ -238,6 +257,9 @@ Outputs:
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
     Value: !GetAtt GetAllMissionsFunction.Arn
+  MissionExpirationFunctionArn:
+    Description: "Expires Missions Lambda Function ARN"
+    Value: !GetAtt MissionExpirationFunction.Arn
   InsertMissionFunctionArn:
     Description: "Insert Mission Lambda Function ARN"
     Value: !GetAtt InsertMissionFunction.Arn

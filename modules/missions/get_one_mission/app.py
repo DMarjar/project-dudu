@@ -1,5 +1,5 @@
 import json
-from modules.missions.get_one_mission.common.db_connection import get_db_connection
+from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, __):
