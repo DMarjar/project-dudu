@@ -4,12 +4,18 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from botocore.exceptions import ClientError
 from modules.missions.mission_expiration import app
-from modules.missions.mission_expiration.common.db_connection import get_secrets
+from modules.missions.mission_expiration.db_connection import get_secrets
 
 from datetime import datetime, timedelta
 
 
 class TestMissionExpiration(TestCase):
+
+    def setUp(self):
+        self.mock_cursor = MagicMock()
+        self.mock_connection = MagicMock()
+        self.mock_get_db_connection = patch('modules.missions.mission_expiration.app.get_db_connection').start()
+        self.mock_get_db_connection.return_value = self.mock_connection
 
     @patch('boto3.session.Session.client')
     def test_get_secrets_client_error(self, mock_client):
@@ -40,30 +46,24 @@ class TestMissionExpiration(TestCase):
             'body': json.dumps("An error occurred while checking the missions: Test exception")
         })
 
-    @patch('modules.missions.mission_expiration.common.db_connection.get_db_connection')
-    def test_check_and_update_expired_missions(self, mock_get_db_connection):
-        # Mock database cursor and execute method
-        mock_cursor = MagicMock()
-        mock_connection = MagicMock()
-        mock_get_db_connection.return_value = mock_connection
-        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+    def test_check_and_update_expired_missions(self):
+        self.mock_connection.cursor.return_value.__enter__.return_value = self.mock_cursor
 
-        # Mock missions data
         current_time = datetime.now()
         missions = [
-            {'id_mission': 1, 'creation_date': current_time - timedelta(days=2), 'due_date': current_time - timedelta(days=1)},
-            # Should fail
-            {'id_mission': 2, 'creation_date': current_time - timedelta(days=2), 'due_date': current_time + timedelta(days=1)},
-            # Should not fail
-            {'id_mission': 3, 'creation_date': None, 'due_date': current_time - timedelta(days=1)},
-            # Should not fail due to None creation_date
-            {'id_mission': 4, 'creation_date': current_time, 'due_date': current_time - timedelta(days=1)},
-            # Should not fail due to creation_date >= due_date
+            {'id_mission': 1, 'due_date': current_time - timedelta(days=1)},
+            {'id_mission': 2, 'due_date': current_time + timedelta(days=1)},
+            {'id_mission': 3, 'due_date': current_time - timedelta(days=1)},
+            {'id_mission': 4, 'due_date': current_time - timedelta(days=1)}
         ]
 
-        mock_cursor.fetchall.return_value = missions
-
+        self.mock_cursor.fetchall.return_value = missions
         app.check_and_update_expired_missions()
+        expected_calls = [
+            ('UPDATE missions SET status = %s WHERE id_mission = %s', ('failed', 1)),
+        ]
+        for call_args, expected_values in expected_calls:
+            self.mock_cursor.execute.assert_any_call(call_args, expected_values)
 
 
 if __name__ == '__main__':
