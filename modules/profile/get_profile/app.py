@@ -1,5 +1,6 @@
 import json
 import boto3
+from pymysql.cursors import DictCursor
 from common.db_connection import get_db_connection
 from botocore.exceptions import ClientError, NoCredentialsError
 from common.httpStatusCodeError import HttpStatusCodeError
@@ -96,34 +97,16 @@ def get_cognito_data(user_id, secrets):
 def get_profile(user_id):
     connection = get_db_connection()
     try:
-        with connection.cursor() as cursor:
-            sql = """
-                SELECT u.id_user, u.level, u.current_xp, u.gender,
+        with connection.cursor(DictCursor) as cursor:
+            sql = """ SELECT u.id_user, u.level, u.current_xp, u.gender,
                        r.id_reward, r.image_wizard, r.image_sorceress, r.unlock_level
                 FROM users u
                 LEFT JOIN rewards r ON u.level >= r.unlock_level
                 WHERE u.id_user = %s
             """
             cursor.execute(sql, (user_id,))
-            rows = cursor.fetchall()
-            if rows:
-                profile_data = []
-                for row in rows:
-                    profile_data.append({
-                        "id_user": row['id_user'],
-                        "level": row['level'],
-                        "current_xp": row['current_xp'],
-                        "gender": row['gender'],
-                        "rewards": {
-                            "id_reward": row['id_reward'],
-                            "image_wizard": row['image_wizard'],
-                            "image_sorceress": row['image_sorceress'],
-                            "unlock_level": row['unlock_level']
-                        }
-                    })
-                return profile_data
-            else:
-                return None
+            profile_data = cursor.fetchall()
+            return profile_data
     finally:
         connection.close()
 
