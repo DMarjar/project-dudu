@@ -1,7 +1,9 @@
 import json
 import datetime
 from pymysql.cursors import DictCursor
-from common.db_connection import get_db_connection
+from modules.missions.mission_expiration.common.db_connection import get_db_connection
+from datetime import datetime
+
 
 
 def lambda_handler(event, context):
@@ -36,12 +38,12 @@ def check_and_update_expired_missions():
             cursor.execute(sql_select)
             missions = cursor.fetchall()
 
-            current_date = datetime.datetime.now()
+            current_date = datetime.now().date()
 
             for mission in missions:
                 due_date_str = mission['due_date']
                 if due_date_str:
-                    due_date = datetime.datetime.strptime(due_date_str, '%Y-%m-%d')
+                    due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
                     if current_date > due_date:
                         sql_update = "UPDATE missions SET status = 'failed' WHERE id_mission = %s"
                         cursor.execute(sql_update, (mission['id_mission'],))

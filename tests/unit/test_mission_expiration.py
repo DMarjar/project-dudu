@@ -76,13 +76,15 @@ class TestMissionExpiration(TestCase):
         self.mock_get_db_connection.return_value = self.mock_connection
         self.mock_connection.cursor.return_value.__enter__.return_value = self.mock_cursor
 
-        current_time = datetime.now()
+        current_time = datetime.now().date()
         missions = [
             {'id_mission': 1, 'due_date': (current_time - timedelta(days=1)).strftime('%Y-%m-%d')},
             {'id_mission': 2, 'due_date': (current_time + timedelta(days=1)).strftime('%Y-%m-%d')},
             {'id_mission': 3, 'due_date': (current_time - timedelta(days=1)).strftime('%Y-%m-%d')},
             {'id_mission': 4, 'due_date': (current_time - timedelta(days=1)).strftime('%Y-%m-%d')}
         ]
+
+        print(f"Current date for testing: {current_time.strftime('%Y-%m-%d')}")
 
         self.mock_cursor.fetchall.return_value = missions
 
