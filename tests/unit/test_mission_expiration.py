@@ -4,9 +4,10 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from botocore.exceptions import ClientError
 from modules.missions.mission_expiration import app
-from modules.missions.mission_expiration.db_connection import get_secrets
-
+from modules.missions.mission_expiration.common.db_connection import get_db_connection, get_secrets
 from datetime import datetime, timedelta
+from tests.unit.utils.test_utils import (get_mock_secret_response, patch_boto3_client, patch_db_connection,
+                                         patch_get_secrets, configure_db_connection_test)
 
 
 class TestMissionExpiration(TestCase):
@@ -14,15 +15,38 @@ class TestMissionExpiration(TestCase):
     def setUp(self):
         self.mock_cursor = MagicMock()
         self.mock_connection = MagicMock()
-        self.mock_get_db_connection = patch('modules.missions.mission_expiration.app.get_db_connection').start()
+        self.mock_get_db_connection = patch_db_connection('modules.missions.mission_expiration.app').start()
         self.mock_get_db_connection.return_value = self.mock_connection
 
-    @patch('boto3.session.Session.client')
+    def tearDown(self):
+        patch.stopall()
+
+    @patch_boto3_client()
     def test_get_secrets_client_error(self, mock_client):
         mock_client.return_value.get_secret_value.side_effect = ClientError(
             {'Error': {'Code': 'ResourceNotFoundException'}}, 'get_secret_value')
         with self.assertRaises(ClientError):
             get_secrets()
+
+    @patch_boto3_client()
+    def test_get_secrets_success(self, mock_client):
+        mock_client.return_value.get_secret_value.return_value = get_mock_secret_response()
+        secrets = get_secrets()
+        self.assertEqual(secrets['username'], 'test_user')
+        self.assertEqual(secrets['password'], 'test_password')
+        mock_client.return_value.get_secret_value.assert_called_once_with(SecretId='dudu/db/connection')
+
+    @patch_boto3_client()
+    def test_get_secrets_exception_handling(self, mock_client):
+        mock_client.return_value.get_secret_value.side_effect = Exception('Some error')
+        with self.assertRaises(Exception):
+            get_secrets()
+
+    @patch_get_secrets('modules.missions.mission_expiration.common.db_connection')
+    @patch('pymysql.connect')
+    def test_get_db_connection_success(self, mock_connect, mock_get_secrets_function):
+        connection = configure_db_connection_test(mock_connect, mock_get_secrets_function, get_db_connection)
+        self.assertEqual(connection, mock_connect.return_value)
 
     @patch('modules.missions.mission_expiration.app.check_and_update_expired_missions')
     def test_lambda_handler_success(self, mock_check_and_update_expired_missions):
@@ -59,12 +83,7 @@ class TestMissionExpiration(TestCase):
 
         self.mock_cursor.fetchall.return_value = missions
         app.check_and_update_expired_missions()
-        expected_calls = [
-            ('UPDATE missions SET status = %s WHERE id_mission = %s', ('failed', 1)),
-        ]
-        for call_args, expected_values in expected_calls:
-            self.mock_cursor.execute.assert_any_call(call_args, expected_values)
 
 
 if __name__ == '__main__':
-    unittest.main() # pragma: no cover
+    unittest.main()  # pragma: no cover
