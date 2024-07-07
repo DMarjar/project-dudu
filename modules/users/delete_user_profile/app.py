@@ -58,9 +58,9 @@ def validate_body(body):
 
     # Validate username
     if 'username' not in body:
-        raise HttpStatusCodeError(400, "Username is required")
+        raise HttpStatusCodeError(400, "Username not in body, is required")
     if body['username'] is None:
-        raise HttpStatusCodeError(400, "Username is required")
+        raise HttpStatusCodeError(400, "Username is none, is required")
     if not isinstance(body['username'], str):
         raise HttpStatusCodeError(400, "Username must be a string")
 
