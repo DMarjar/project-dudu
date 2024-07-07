@@ -1,6 +1,6 @@
 import json
 import unittest
-from unittest import TestCase
+from unittest import TestCase, mock
 from unittest.mock import patch, MagicMock
 from botocore.exceptions import ClientError
 from modules.missions.mission_expiration import app
@@ -71,18 +71,30 @@ class TestMissionExpiration(TestCase):
         })
 
     def test_check_and_update_expired_missions(self):
+        self.mock_connection = mock.MagicMock()
+        self.mock_cursor = mock.MagicMock()
+        self.mock_get_db_connection.return_value = self.mock_connection
         self.mock_connection.cursor.return_value.__enter__.return_value = self.mock_cursor
 
         current_time = datetime.now()
         missions = [
-            {'id_mission': 1, 'due_date': current_time - timedelta(days=1)},
-            {'id_mission': 2, 'due_date': current_time + timedelta(days=1)},
-            {'id_mission': 3, 'due_date': current_time - timedelta(days=1)},
-            {'id_mission': 4, 'due_date': current_time - timedelta(days=1)}
+            {'id_mission': 1, 'due_date': (current_time - timedelta(days=1)).strftime('%Y-%m-%d')},
+            {'id_mission': 2, 'due_date': (current_time + timedelta(days=1)).strftime('%Y-%m-%d')},
+            {'id_mission': 3, 'due_date': (current_time - timedelta(days=1)).strftime('%Y-%m-%d')},
+            {'id_mission': 4, 'due_date': (current_time - timedelta(days=1)).strftime('%Y-%m-%d')}
         ]
 
         self.mock_cursor.fetchall.return_value = missions
+
         app.check_and_update_expired_missions()
+
+        expected_calls = [
+            mock.call("UPDATE missions SET status = 'failed' WHERE id_mission = %s", (1,)),
+            mock.call("UPDATE missions SET status = 'failed' WHERE id_mission = %s", (3,)),
+            mock.call("UPDATE missions SET status = 'failed' WHERE id_mission = %s", (4,))
+        ]
+        self.mock_cursor.execute.assert_has_calls(expected_calls, any_order=True)
+        self.mock_connection.commit.assert_called_once()
 
 
 if __name__ == '__main__':

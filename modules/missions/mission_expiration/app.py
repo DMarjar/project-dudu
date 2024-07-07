@@ -39,10 +39,12 @@ def check_and_update_expired_missions():
             current_date = datetime.datetime.now()
 
             for mission in missions:
-                due_date = mission['due_date']
-                if due_date and current_date > due_date:
-                    sql_update = "UPDATE missions SET status = 'failed' WHERE id_mission = %s"  # pragma: no cover
-                    cursor.execute(sql_update, (mission['id_mission'],))  # pragma: no cover
+                due_date_str = mission['due_date']
+                if due_date_str:
+                    due_date = datetime.datetime.strptime(due_date_str, '%Y-%m-%d')
+                    if current_date > due_date:
+                        sql_update = "UPDATE missions SET status = 'failed' WHERE id_mission = %s"
+                        cursor.execute(sql_update, (mission['id_mission'],))
             connection.commit()
     finally:
         connection.close()
