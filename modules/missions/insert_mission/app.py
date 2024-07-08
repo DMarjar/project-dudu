@@ -2,99 +2,145 @@ import json
 from datetime import datetime
 from common.db_connection import get_db_connection
 from common.openai_connection import get_openai_client
+from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
+    """ This function generates a fantasy description for a mission and inserts it into the database
+
+    body (dict): The body parameter is a dictionary that contains the following attributes:
+        - original_description (str): The original description of the mission
+        - id_user (int): The user id
+        - creation_date (str): The creation date of the mission
+        - status (str): The status of the mission
+
+    Returns:
+        dict: A dictionary that contains the status code and a message
+    """
+
     try:
         body = json.loads(event['body'])
 
-        #validate payload
+        # Validate payload
         validate_body(body)
 
-        #validate existence of user
+        # Validate existence of user
         validate_user(body['id_user'])
 
-        #Generate fantasy description
+        # Generate fantasy description
         fantasy_description = get_openai_client(body.get('original_description', ''))
 
-        #add fantasy description to body
+        # Add fantasy description to body
         body['fantasy_description'] = fantasy_description
 
-        #insert mission
+        # Insert mission
         insert_mission(body)
 
         response = {
             'statusCode': 200,
             'body': json.dumps("Mission inserted successfully")
         }
+
+    except HttpStatusCodeError as e:
+        response = {
+            'statusCode': e.status_code,
+            'body': json.dumps(e.message)
+        }
+
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps(f"An error occurred while getting the missions: {str(e)} - {event}")
+            'body': json.dumps(str(e))
         }
 
     return response
 
 
-#validate payload
+# Validate payload
 def validate_body(body):
-    #validate original_description###
+    """ This function validates the payload"""
+
+    # Validate original_description
     if 'original_description' not in body:
-        raise Exception("original_description is required")
+        raise HttpStatusCodeError(400, "original_description is required")
 
-    #validate id_user###
+    if body['original_description'] is None:
+        raise HttpStatusCodeError(400, "original_description is required")
+
+    if not isinstance(body['original_description'], str):
+        raise HttpStatusCodeError(400, "original_description must be a string")
+
+    if len(body['original_description']) == 0:
+        raise HttpStatusCodeError(400, "original_description cannot be empty")
+
+    # Validate id_user
     if 'id_user' not in body:
-        raise Exception("id_user is required")
+        raise HttpStatusCodeError(400, "id_user is required")
 
-    #validate creation_date###
+    if body['id_user'] is None:
+        raise HttpStatusCodeError(400, "id_user is required")
+
+    # Validate creation_date
     if 'creation_date' not in body:
-        raise Exception("creation_date is required")
+        raise HttpStatusCodeError(400, "creation_date is required")
+
+    if body['creation_date'] is None:
+        raise HttpStatusCodeError(400, "creation_date is required")
 
     try:
         datetime.strptime(body['creation_date'], '%Y-%m-%d')
     except ValueError:
-        raise Exception("Incorrect creation_date format, should be YYYY-MM-DD HH:MM:SS")
+        raise HttpStatusCodeError(400, "Incorrect creation_date format, should be YYYY-MM-DD")
 
-    #validate status###
+    # Validate status
     if 'status' not in body:
-        raise Exception("status is required")
+        raise HttpStatusCodeError(400, "status is required")
+
+    if body['status'] is None:
+        raise HttpStatusCodeError(400, "status is required")
 
     if body['status'] not in ['pending', 'completed', 'cancelled', 'in_progress']:
-        raise Exception("Status not valid")
+        raise HttpStatusCodeError(400, "Invalid status")
 
     return True
 
 
-#validate existence of user
+# Validate existence of user
 def validate_user(id_user):
-    connection = get_db_connection()
-    try:
+    """ This function validates the existence of a user
 
+    id_user (int): The user id
+
+    Returns:
+        bool: True if the user exists
+    """
+    connection = get_db_connection()
+
+    try:
         with connection.cursor() as cursor:
             sql = "SELECT * FROM users WHERE id_user = %s"
             cursor.execute(sql, id_user)
             rows = cursor.fetchall()
+
             if len(rows) == 0:
-                raise Exception("User not found")
-    except Exception as e:
-        raise e
+                raise HttpStatusCodeError(404, "User not found")
     finally:
         connection.close()
     return True
 
 
-#insert mission
+# Insert mission
 def insert_mission(body):
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
             sql = "INSERT INTO missions (original_description, fantasy_description, creation_date, status, id_user) VALUES (%s, %s, %s, %s, %s)"
             cursor.execute(sql, (
-            body['original_description'], body['fantasy_description'], body['creation_date'], body['status'],
-            body['id_user']))
+                body['original_description'], body['fantasy_description'], body['creation_date'], body['status'],
+                body['id_user']))
         connection.commit()
-    except Exception as e:
-        raise e
+    except Exception:
+        raise HttpStatusCodeError(500, "Error inserting mission")
     finally:
         connection.close()
     return True

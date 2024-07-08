@@ -3,17 +3,34 @@ from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, __):
+    """ This function gets one mission
+
+    Returns:
+        dict: A dictionary that contains the mission's information
+    """
+
     try:
         mission_id = event.get('pathParameters', {}).get('id_mission')
 
         if mission_id is None:
-            raise Exception("id_mission is required.")
+            response = {
+                'statusCode': 400,
+                'body': json.dumps("Mission id is required")
+            }
+            return response
 
         mission = get_mission_by_id(mission_id)
-        response = {
-            'statusCode': 200,
-            'body': json.dumps(mission)
-        }
+
+        if mission is None:
+            response = {
+                'statusCode': 404,
+                'body': json.dumps("Mission not found")
+            }
+        else:
+            response = {
+                'statusCode': 200,
+                'body': json.dumps(mission)
+            }
 
     except Exception as e:
         response = {
