@@ -65,8 +65,6 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "Username must be a string")
 
     return True
-
-
 def get_secret():
     secret_name = "users_pool/client_secret"
     region_name = "us-east-2"
