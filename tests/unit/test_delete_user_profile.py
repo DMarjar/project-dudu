@@ -1,10 +1,7 @@
 import json
 import unittest
 from unittest.mock import patch, MagicMock
-
 from botocore.exceptions import ClientError, NoCredentialsError
-from pymysql import ProgrammingError
-
 from modules.users.delete_user_profile import app
 from modules.users.delete_user_profile.common.httpStatusCodeError import HttpStatusCodeError
 
@@ -108,6 +105,7 @@ class TestDeleteUserProfile(unittest.TestCase):
         - the case where the username not in body
         - the case where the username is none
         - the case where the username must be a string
+        - the case where the body is correct (successfully)
     """
 
     def test_username_is_missing(self):
@@ -159,6 +157,22 @@ class TestDeleteUserProfile(unittest.TestCase):
         self.assertEqual(response, expected_response)
         self.print_response(response)
         print("Request body:", body_username_is_not_string['body'])
+
+    def test_validate_body_success(self):
+        valid_body = {
+            'id': 1,
+            'username': 'testuser'
+        }
+
+        result = app.validate_body(valid_body)
+        self.assertTrue(result)
+
+        # Imprimir resultado
+        response = {
+            'statusCode': 200,
+            'body': json.dumps("Validation successful")
+        }
+        self.print_response(response)
 
     """
     Test class for the get_secret function on:
@@ -284,7 +298,7 @@ class TestDeleteUserProfile(unittest.TestCase):
 
         id = 1
         mock_cursor = mock_connection.cursor.return_value
-        mock_cursor.__enter__.return_value = mock_cursor  
+        mock_cursor.__enter__.return_value = mock_cursor
         mock_cursor.rowcount = 0
 
         with self.assertRaises(HttpStatusCodeError) as context:
