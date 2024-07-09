@@ -1,6 +1,7 @@
 import json
 import pymysql
 import boto3
+from botocore.exceptions import ClientError
 
 DB_HOST = 'dududb.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
 DB_NAME = 'dududb'
@@ -35,7 +36,7 @@ def get_secrets():
         get_secret_value_response = client.get_secret_value(
             SecretId=secret_name
         )
-    except Exception as e:
+    except ClientError as e:
         raise e
 
     secret = get_secret_value_response['SecretString']

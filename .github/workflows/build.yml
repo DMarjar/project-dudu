@@ -50,6 +50,33 @@ jobs:
         run: |
           cd modules/missions/get_all_missions
           pip install -r requirements.txt
+      - name: Install dependencies for insert_mission
+        run: |
+          cd modules/missions/insert_mission
+          pip install -r requirements.txt
+      - name: Install dependencies for get_one_mission
+        run: |
+          cd modules/missions/get_one_mission
+          pip install -r requirements.txt
+      - name: Install dependencies for complete_mission
+        run: |
+          cd modules/missions/complete_mission
+      - name: Install dependencies for cancel_mission
+        run: |
+          cd modules/missions/cancel_mission
+          pip install -r requirements.txt
+      - name: Install dependencies for search_mission
+        run: |
+          cd modules/missions/search_mission
+          pip install -r requirements.txt
+      - name: Install dependencies for register_user
+        run: |
+          cd modules/users/register_user
+          pip install -r requirements.txt
+      - name: Install dependencies for set_password
+        run: |
+          cd modules/users/set_password
+          pip install -r requirements.txt
       - name: Install AWS CLI
         run: |
           sudo apt-get update

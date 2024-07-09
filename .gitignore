@@ -61,6 +61,13 @@ Temporary Items
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 
+# .idea files
+.idea/*.iml
+.idea/modules.xml
+.idea/aws.xml
+.idea/misc.xml
+.idea/vcs.xml
+
 # Gradle:
 .idea/**/gradle.xml
 .idea/**/libraries
@@ -242,3 +249,10 @@ $RECYCLE.BIN/
 */build/*
 
 # End of https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode
+.idea/aws.xml
+.idea/misc.xml
+.idea/project-dudu.iml
+.idea/sqldialects.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea
+
