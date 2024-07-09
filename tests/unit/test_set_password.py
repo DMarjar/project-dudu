@@ -1,11 +1,12 @@
 import json
-from modules.users.login import app
+from modules.users.set_password import app
 from unittest import TestCase
 
 EVENT = {
     'body': json.dumps({
         'username': 'Atoferatofe',
-        'password': '20213Tn105!'
+        'password': 'wivPv}u8ktJ_',
+        'new_password': '20213Tn105!'
     })
 }
 
