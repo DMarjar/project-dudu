@@ -4,6 +4,9 @@ from unittest.mock import patch, MagicMock
 from modules.missions.get_one_mission.app import lambda_handler
 from modules.missions.get_one_mission.common.db_connection import get_db_connection, get_secrets
 from botocore.exceptions import ClientError
+from tests.unit.utils.test_utils import (get_mock_secret_response,
+                                         patch_boto3_client, patch_db_connection, patch_get_secrets,
+                                         configure_db_connection_test)
 
 
 class Test(TestCase):
@@ -13,57 +16,38 @@ class Test(TestCase):
         self.mock_get_secrets = self.mock_get_secrets_patch.start()
         self.mock_cursor = MagicMock()
         self.mock_connection = MagicMock()
-        self.mock_get_db_connection = patch('modules.missions.get_one_mission.app.get_db_connection').start()
+        self.mock_get_db_connection = patch_db_connection('modules.missions.get_one_mission.app').start()
         self.mock_get_db_connection.return_value = self.mock_connection
 
     def tearDown(self):
         patch.stopall()
 
-    @patch('boto3.session.Session.client')
-    def test_get_secrets_success(self, mock_client):
-        mock_secret_response = {
-            'SecretString': '{"username": "test_user", "password": "test_password"}'
-        }
-        mock_client.return_value.get_secret_value.return_value = mock_secret_response
-        secrets = get_secrets()
-        self.assertEqual(secrets['username'], 'test_user')
-        self.assertEqual(secrets['password'], 'test_password')
-        mock_client.return_value.get_secret_value.assert_called_once_with(SecretId='dudu/db/connection')
-
-    @patch('boto3.session.Session.client')
+    @patch_boto3_client()
     def test_get_secrets_client_error(self, mock_client):
         mock_client.return_value.get_secret_value.side_effect = ClientError(
             {'Error': {'Code': 'ResourceNotFoundException'}}, 'get_secret_value')
         with self.assertRaises(ClientError):
             get_secrets()
 
-    @patch('boto3.session.Session.client')
+    @patch_boto3_client()
+    def test_get_secrets_success(self, mock_client):
+        mock_client.return_value.get_secret_value.return_value = get_mock_secret_response()
+        secrets = get_secrets()
+        self.assertEqual(secrets['username'], 'test_user')
+        self.assertEqual(secrets['password'], 'test_password')
+        mock_client.return_value.get_secret_value.assert_called_once_with(SecretId='dudu/db/connection')
+
+    @patch_boto3_client()
     def test_get_secrets_exception_handling(self, mock_client):
         mock_client.return_value.get_secret_value.side_effect = Exception('Some error')
         with self.assertRaises(Exception):
             get_secrets()
 
-    @patch('modules.missions.get_one_mission.common.db_connection.get_secrets')
+    @patch_get_secrets('modules.missions.get_one_mission.common.db_connection')
     @patch('pymysql.connect')
-    def test_get_db_connection_success(self, mock_connect, mock_get_secrets):
-        mock_secrets = {
-            'username': 'test_user',
-            'password': 'test_password'
-        }
-        mock_get_secrets.return_value = mock_secrets
-        mock_connection = MagicMock()
-        mock_connect.return_value = mock_connection
-        connection = get_db_connection()
-        db_host = 'dududb.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
-        db_name = 'dududb'
-        mock_get_secrets.assert_called_once()
-        mock_connect.assert_called_once_with(
-            host=db_host,
-            user=mock_secrets['username'],
-            password=mock_secrets['password'],
-            db=db_name
-        )
-        self.assertEqual(connection, mock_connection)
+    def test_get_db_connection_success(self, mock_connect, mock_get_secrets_function):
+        connection = configure_db_connection_test(mock_connect, mock_get_secrets_function, get_db_connection)
+        self.assertEqual(connection, mock_connect.return_value)
 
     def test_lambda_handler_success(self):
         self.mock_cursor.fetchone.return_value = (1, 'Test Mission')

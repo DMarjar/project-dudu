@@ -51,6 +51,23 @@ Resources:
             Path: /get_all_missions
             Method: get
 
+  MissionExpirationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/missions/mission_expiration/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        MissionExpiration:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionApi
+            Path: /mission_expiration
+            Method: post
+
   InsertMissionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -118,6 +135,39 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /change_password/
             Method: post
+  GetProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/profile/get_profile
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetProfile:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /get_profile
+            Method: get
+
+  UpdateProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/profile/update_profile/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        UpdateProfile:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /update_profile
+            Method: put
 
   CompleteMissionFunction:
     Type: AWS::Serverless::Function
@@ -129,7 +179,7 @@ Resources:
       Architectures:
         - x86_64
       Events:
-        CancelMission:
+        CompleteMission:
           Type: Api
           Properties:
             RestApiId: !Ref MissionApi
@@ -170,7 +220,7 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /search_mission
             Method: post
-  
+
   RegisterUserFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -205,6 +255,23 @@ Resources:
             Path: /set_password
             Method: post
 
+  DeleteUserProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/delete_user_profile/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        CancelMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /delete_user_profile
+            Method: delete
+
   MissionApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -221,19 +288,28 @@ Outputs:
   LambdaExecutionRoleArn:
     Description: "Implicit IAM Role created for Lambda function"
     Value: !GetAtt LambdaExecutionRole.Arn
-    
+
   GetAllMissionsApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get All Missions function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_all_missions/"
+  MissionExpirationApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Mission Expiration function"
+    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mission_expiration/"
   GetOneMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
+  GetProfileApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Get Profile function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_profile/"
   RecoverPasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Recover Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/recover_password/"
   ChangePasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Change Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/change_password/"
+  UpdateProfileApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Update Profile function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_profile/"
   CompleteMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/complete_mission/"
@@ -246,7 +322,6 @@ Outputs:
   SearchMissionApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Search Mission function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/search_mission/"
-
   RegisterUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Register User function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_user/"
@@ -254,10 +329,17 @@ Outputs:
     Description: "API Gateway endpoint URL for Prod stage for Set Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/set_password/"
 
+  DeleteUserProfileApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Delete User Profile function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/delete_user_profile/"
+
 
   GetAllMissionsFunctionArn:
     Description: "Get All Missions Lambda Function ARN"
     Value: !GetAtt GetAllMissionsFunction.Arn
+  MissionExpirationFunctionArn:
+    Description: "Expires Missions Lambda Function ARN"
+    Value: !GetAtt MissionExpirationFunction.Arn
   InsertMissionFunctionArn:
     Description: "Insert Mission Lambda Function ARN"
     Value: !GetAtt InsertMissionFunction.Arn
@@ -267,6 +349,12 @@ Outputs:
   RecoverPasswordFunctionArn:
     Description: "Recover Password Lambda Function ARN"
     Value: !GetAtt RecoverPasswordFunction.Arn
+  GetProfileFunctionArn:
+    Description: "Get Profile Lambda Function ARN"
+    Value: !GetAtt GetProfileFunction.Arn
+  UpdateProfileFunctionArn:
+    Description: "Update Profile Lambda Function ARN"
+    Value: !GetAtt UpdateProfileFunction.Arn
   ChangePasswordFunctionArn:
     Description: "Change Password Lambda Function ARN"
     Value: !GetAtt ChangePasswordFunction.Arn
@@ -288,3 +376,6 @@ Outputs:
     Description: "Set Password Lambda Function ARN"
     Value: !GetAtt SetPasswordFunction.Arn
 
+  DeleteUserProfileFunctionArn:
+    Description: "Delete User Profile Lambda Function ARN"
+    Value: !GetAtt DeleteUserProfileFunction.Arn
