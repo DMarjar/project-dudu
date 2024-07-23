@@ -52,8 +52,8 @@ def lambda_handler(event, ___):
         response = {
             'statusCode': e.status_code,
             'headers': {
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Origin': 'https://www.example.com',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
             'body': json.dumps(e.message)
@@ -63,8 +63,8 @@ def lambda_handler(event, ___):
         response = {
             'statusCode': 500,
             'headers': {
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Origin': 'https://www.example.com',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
             'body': json.dumps('User or password incorrect')
