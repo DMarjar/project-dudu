@@ -46,19 +46,23 @@ def lambda_handler(event, ___):
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
+            'headers': {
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Origin': 'https://www.example.com',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
             'body': json.dumps(e.message)
-        }
-
-    except NoAuthorizedException as e:
-        response = {
-            'statusCode': 401,
-            'body': json.dumps('User or password incorrect')
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps('Internal server error' + str(e))
+            'headers': {
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Origin': 'https://www.example.com',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
+            'body': json.dumps('User or password incorrect')
 
         }
 
