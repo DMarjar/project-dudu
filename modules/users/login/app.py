@@ -3,7 +3,7 @@ import boto3
 import hashlib
 import json
 import base64
-from botocore.exceptions import ClientError, NoCredentialsError, NoAuthorizedException
+from botocore.exceptions import ClientError, NoCredentialsError
 
 from common.httpStatusCodeError import HttpStatusCodeError
 
