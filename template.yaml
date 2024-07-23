@@ -9,6 +9,12 @@ Globals:
   Function:
     Timeout: 120
     MemorySize: 256
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+
 
 Resources:
 
@@ -294,12 +300,20 @@ Resources:
     Properties:
       Name: MissionApi
       StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
 
   UsersApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: UsersApi
       StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
 
 Outputs:
   LambdaExecutionRoleArn:
