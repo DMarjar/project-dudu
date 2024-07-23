@@ -3,7 +3,7 @@ import boto3
 import hashlib
 import json
 import base64
-from botocore.exceptions import ClientError, NoCredentialsError
+from botocore.exceptions import ClientError, NoCredentialsError, NoAuthorizedException
 
 from common.httpStatusCodeError import HttpStatusCodeError
 
@@ -47,6 +47,12 @@ def lambda_handler(event, ___):
         response = {
             'statusCode': e.status_code,
             'body': json.dumps(e.message)
+        }
+
+    except NoAuthorizedException as e:
+        response = {
+            'statusCode': 401,
+            'body': json.dumps('User or password incorrect')
         }
 
     except Exception as e:
