@@ -47,7 +47,6 @@ def lambda_handler(event, ___):
             'body': json.dumps(e.message)
         }
     except Exception as e:
-        error_message = str(e) if e is not None else "Unknown error"
         response = {
             'statusCode': 500,
             'headers': {
@@ -55,7 +54,7 @@ def lambda_handler(event, ___):
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
-            'body': json.dumps({"error": error_message}),
+            'body': json.dumps("An unexpected error occurred"),
         }
 
     return response
