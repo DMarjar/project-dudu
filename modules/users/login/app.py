@@ -5,7 +5,7 @@ import json
 import base64
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from .common.httpStatusCodeError import HttpStatusCodeError
+from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
@@ -35,6 +35,11 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
             'body': json.dumps({
                 'id_token': tokens['AuthenticationResult']['IdToken'],
                 'access_token': tokens['AuthenticationResult']['AccessToken'],
@@ -46,13 +51,23 @@ def lambda_handler(event, ___):
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
             'body': json.dumps(e.message)
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps('Internal server error')
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
+            'body': json.dumps('User or password incorrect')
 
         }
 
