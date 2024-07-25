@@ -51,7 +51,6 @@ def lambda_handler(event, ___):
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps(f"An error occurred while getting the missions: {str(e)} - {event}"),
             'headers': headers_open,
             'body': json.dumps(e)
         }
