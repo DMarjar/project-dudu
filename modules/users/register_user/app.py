@@ -54,7 +54,7 @@ def lambda_handler(event, ___):
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
-            'body': json.dumps("An unexpected error occurred"),
+            'body': json.dumps("An unexpected error occurred: " + str(e)),
         }
 
     return response
