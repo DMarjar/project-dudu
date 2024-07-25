@@ -9,6 +9,12 @@ Globals:
   Function:
     Timeout: 120
     MemorySize: 256
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+
 
 Resources:
 
@@ -238,6 +244,23 @@ Resources:
             Path: /register_user
             Method: post
 
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/login/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        RegisterUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /login
+            Method: post
+
   SetPasswordFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -277,12 +300,20 @@ Resources:
     Properties:
       Name: MissionApi
       StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
 
   UsersApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: UsersApi
       StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
 
 Outputs:
   LambdaExecutionRoleArn:
@@ -328,7 +359,9 @@ Outputs:
   SetPasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Set Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/set_password/"
-
+  LoginApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Login function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/login/"
   DeleteUserProfileApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Delete User Profile function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/delete_user_profile/"
@@ -367,14 +400,15 @@ Outputs:
   SearchMissionFunctionArn:
     Description: "Search Mission Lambda Function ARN"
     Value: !GetAtt SearchMissionFunction.Arn
-
-
   RegisterUserFunctionArn:
     Description: "Register User Lambda Function ARN"
     Value: !GetAtt RegisterUserFunction.Arn
   SetPasswordFunctionArn:
     Description: "Set Password Lambda Function ARN"
     Value: !GetAtt SetPasswordFunction.Arn
+  LoginFunctionArn:
+    Description: "Login Lambda Function ARN"
+    Value: !GetAtt LoginFunction.Arn
 
   DeleteUserProfileFunctionArn:
     Description: "Delete User Profile Lambda Function ARN"
