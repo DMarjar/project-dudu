@@ -9,6 +9,11 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from common.httpStatusCodeError import HttpStatusCodeError
 from common.db_connection import get_db_connection
 
+headers_open = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+}
 
 def lambda_handler(event, ___):
     try:
@@ -34,13 +39,15 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
-            'body': json.dumps("User registered successfully")
+            'body': json.dumps("User registered successfully"),
+            'headers': headers_open
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps(f"An error occurred while getting the missions: {str(e)} - {event}")
+            'body': json.dumps(f"An error occurred while getting the missions: {str(e)} - {event}"),
+            'headers': headers_open
         }
 
     return response
