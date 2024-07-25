@@ -47,7 +47,7 @@ def lambda_handler(event, ___):
             'body': json.dumps(e.message)
         }
     except Exception as e:
-        error_message = str(e)
+        error_message = str(e) if e is not None else "Unknown error"
         response = {
             'statusCode': 500,
             'headers': {
