@@ -12,7 +12,7 @@ from common.db_connection import get_db_connection
 headers_open = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
 }
 
 def lambda_handler(event, ___):
@@ -51,7 +51,6 @@ def lambda_handler(event, ___):
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps(f"An error occurred while getting the missions: {str(e)} - {event}"),
             'headers': headers_open,
             'body': json.dumps(e)
         }
