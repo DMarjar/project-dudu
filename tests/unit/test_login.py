@@ -1,6 +1,7 @@
 import json
 from modules.users.login import app
 from unittest import TestCase
+import pytest
 
 EVENT = {
     'body': json.dumps({
