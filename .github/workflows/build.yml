@@ -85,6 +85,10 @@ jobs:
         run: |
           cd modules/users/exist_user
           pip install -r requirements.txt
+      - name: Install dependencies for register_alexa_user
+        run: |
+          cd modules/users/register_alexa_user
+          pip install -r requirements.txt
       - name: Install AWS CLI
         run: |
           sudo apt-get update

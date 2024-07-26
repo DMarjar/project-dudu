@@ -9,6 +9,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from common.httpStatusCodeError import HttpStatusCodeError
 from common.db_connection import get_db_connection
 
+
 def lambda_handler(event, ___):
     try:
         body = json.loads(event['body'])

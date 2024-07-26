@@ -312,6 +312,23 @@ Resources:
             Path: /exist_user
             Method: post
 
+  RegisterAlexaUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/register_alexa_user/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        RegisterAlexaUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /register_alexa_user
+            Method: post
+
   MissionApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -385,6 +402,9 @@ Outputs:
   ExistUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Exist User function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/exist_user/"
+  RegisterAlexaUserApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Register Alexa User function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_alexa_user/"
 
 
   GetAllMissionsFunctionArn:
@@ -435,3 +455,6 @@ Outputs:
   DeleteUserProfileFunctionArn:
     Description: "Delete User Profile Lambda Function ARN"
     Value: !GetAtt DeleteUserProfileFunction.Arn
+  RegisterAlexaUserFunctionArn:
+    Description: "Register Alexa User Lambda Function ARN"
+    Value: !GetAtt RegisterAlexaUserFunction.Arn
