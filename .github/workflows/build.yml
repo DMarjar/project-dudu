@@ -77,9 +77,13 @@ jobs:
         run: |
           cd modules/users/set_password
           pip install -r requirements.txt
-      - name: Install dependencies for set_password
+      - name: Install dependencies for login
         run: |
           cd modules/users/login
+          pip install -r requirements.txt
+      - name: Install dependencies for exist_user
+        run: |
+          cd modules/users/exist_user
           pip install -r requirements.txt
       - name: Install AWS CLI
         run: |
