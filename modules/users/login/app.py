@@ -5,7 +5,7 @@ import json
 import base64
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from common.httpStatusCodeError import HttpStatusCodeError
+from .common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
@@ -132,27 +132,24 @@ def verify_user(username, secrets):
     client = boto3.client('cognito-idp', region_name='us-east-2')
     user_pool_id = secrets['USER_POOL_ID']
 
-    try:
-        user = client.admin_get_user(
-            UserPoolId=user_pool_id,
-            Username=username
-        )
 
-        email_verified = user['UserAttributes'][1]['Value']
-        user_status = user['UserStatus']
+    user = client.admin_get_user(
+        UserPoolId=user_pool_id,
+        Username=username
+    )
 
-        if not email_verified or email_verified is None:
-            raise HttpStatusCodeError(401, "User or password incorrect")
-        if not user_status or user_status is None:
-            raise HttpStatusCodeError(401, "User or password incorrect")
+    email_verified = user['UserAttributes'][1]['Value']
+    user_status = user['UserStatus']
 
-        if str.lower(email_verified) != 'true':
-            raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
-        if user_status != 'CONFIRMED':
-            raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
+    if not email_verified or email_verified is None:
+        raise HttpStatusCodeError(401, "User or password incorrect")
+    if not user_status or user_status is None:
+        raise HttpStatusCodeError(401, "User or password incorrect")
 
-    except Exception:
-        raise HttpStatusCodeError(404, "User not found")
+    if str.lower(email_verified) != 'true':
+        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
+    if user_status != 'CONFIRMED':
+        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
 
     return True
 
