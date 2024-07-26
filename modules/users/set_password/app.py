@@ -5,7 +5,7 @@ import json
 import re
 import boto3
 
-from .common.httpStatusCodeError import HttpStatusCodeError
+from common.httpStatusCodeError import HttpStatusCodeError
 from botocore.exceptions import ClientError, NoCredentialsError
 
 
@@ -18,17 +18,32 @@ def lambda_handler(event, context):
 
         response = set_password(body, secrets)
 
+        response['headers'] = {
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST'
+        }
+
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps(e.message)
+            'body': json.dumps(e.message),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps('Internal server error', str(e))
-
+            'body': json.dumps('Internal server error'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     return response
@@ -72,7 +87,7 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "New password is required")
     if not isinstance(body['new_password'], str):
         raise HttpStatusCodeError(400, "New password must be a string")
-    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', body['new_password']):
+    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#_])[A-Za-z\d@$!%*?&#_]{8,}$', body['new_password']):
         raise HttpStatusCodeError(400, "New password must contain at least 8 characters, one uppercase, one lowercase, "
                                        "one number and one special character")
 
