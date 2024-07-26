@@ -18,6 +18,12 @@ def lambda_handler(event, context):
 
         response = set_password(body, secrets)
 
+        response['headers'] = {
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST'
+        }
+
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
