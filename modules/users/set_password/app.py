@@ -5,7 +5,7 @@ import json
 import re
 import boto3
 
-from .common.httpStatusCodeError import HttpStatusCodeError
+from common.httpStatusCodeError import HttpStatusCodeError
 from botocore.exceptions import ClientError, NoCredentialsError
 
 
@@ -21,14 +21,23 @@ def lambda_handler(event, context):
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps(e.message)
+            'body': json.dumps(e.message),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps('Internal server error')
-
+            'body': json.dumps('Internal server error'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     return response
