@@ -9,12 +9,6 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from common.httpStatusCodeError import HttpStatusCodeError
 from common.db_connection import get_db_connection
 
-headers_open = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
-}
-
 def lambda_handler(event, ___):
     try:
         body = json.loads(event['body'])
@@ -40,19 +34,32 @@ def lambda_handler(event, ___):
         response = {
             'statusCode': 200,
             'body': json.dumps("User registered successfully"),
-            'headers': headers_open
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
         }
 
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps(e.message)
+            'body': json.dumps("An error occurred: " + str(e)),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
         }
     except Exception as e:
         response = {
             'statusCode': 500,
-            'headers': headers_open,
-            'body': json.dumps(e)
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
+            'body': json.dumps("An unexpected error occurred: " + str(e)),
         }
 
     return response
