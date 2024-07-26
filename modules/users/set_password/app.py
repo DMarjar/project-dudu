@@ -81,7 +81,7 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "New password is required")
     if not isinstance(body['new_password'], str):
         raise HttpStatusCodeError(400, "New password must be a string")
-    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', body['new_password']):
+    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#_])[A-Za-z\d@$!%*?&#_]{8,}$', body['new_password']):
         raise HttpStatusCodeError(400, "New password must contain at least 8 characters, one uppercase, one lowercase, "
                                        "one number and one special character")
 
