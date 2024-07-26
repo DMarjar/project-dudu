@@ -38,7 +38,7 @@ def lambda_handler(event, context):
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps('Internal server error'),
+            'body': json.dumps('Internal server error', str(e)),
             'headers': {
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Origin': '*',
