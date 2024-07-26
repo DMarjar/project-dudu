@@ -278,23 +278,6 @@ Resources:
             Path: /set_password
             Method: post
 
-    ExistUserFunction:
-      Type: AWS::Serverless::Function
-      Properties:
-        CodeUri: modules/users/exist_user/
-        Handler: app.lambda_handler
-        Runtime: python3.12
-        Role: !GetAtt LambdaExecutionRole.Arn
-        Architectures:
-          - x86_64
-        Events:
-          SetPassword:
-            Type: Api
-            Properties:
-              RestApiId: !Ref UsersApi
-              Path: /exist_user
-              Method: post
-
   DeleteUserProfileFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -311,6 +294,23 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /delete_user_profile
             Method: delete
+
+  ExistUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/exist_user/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        ExistUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /exist_user
+            Method: post
 
   MissionApi:
     Type: AWS::Serverless::Api
