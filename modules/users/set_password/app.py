@@ -27,7 +27,7 @@ def lambda_handler(event, context):
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps('Internal server error')
+            'body': json.dumps('Internal server error', str(e))
 
         }
 
@@ -171,9 +171,8 @@ def set_password(body, secrets):
                 })
             }
 
-
     except Exception as e:
-        raise HttpStatusCodeError(500, "Error creating cognito client")
+        raise HttpStatusCodeError(500, str(e))
 
 
 def get_secret_hash(username, client_id, client_secret):
