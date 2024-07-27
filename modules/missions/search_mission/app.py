@@ -147,7 +147,7 @@ def search_mission(body):
             total = cursor.fetchone()['total']
 
             if total == 0:
-                return []
+                return [], total
 
             sql = ("SELECT id_mission, "
                    "original_description, "
