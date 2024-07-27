@@ -133,7 +133,7 @@ def search_mission(body):
     connection = get_db_connection()
     try:
         with connection.cursor(DictCursor) as cursor:
-            limit = 1
+            limit = 6
             offset = (body['page'] - 1) * limit
 
             # Get the total number of missions
