@@ -149,12 +149,18 @@ def search_mission(body):
             if total == 0:
                 return []
 
-            sql = ("SELECT * FROM missions "
+            sql = ("SELECT id_mission, "
+                   "original_description, "
+                   "fantasy_description, "
+                   "creation_date, "
+                   "due_date, "
+                   "status "
+                   "FROM missions "
                    "WHERE id_user=%s "
                    "AND (original_description LIKE %s "
                    "OR fantasy_description LIKE %s) "
                    "AND status=%s "
-                   "ORDER BY %s %s"
+                   "ORDER BY %s %s "
                    "LIMIT %s OFFSET %s")
             cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
                                  body['status'], body['order_by'], body['order'], limit, offset))
