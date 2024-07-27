@@ -52,13 +52,6 @@ def lambda_handler(event, __):
             'body': json.dumps(e.message)
         }
 
-    except Exception as e:
-        response = {
-            'statusCode': 500,
-            'headers': headers,
-            'body': json.dumps(str(e))
-        }
-
     return response
 
 
