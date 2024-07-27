@@ -18,7 +18,12 @@ def lambda_handler(event, context):
     if new_password != confirm_new_password:
         return {
             'statusCode': 400,
-            'body': json.dumps('New password and confirmation password do not match.')
+            'body': json.dumps('New password and confirmation password do not match.'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     try:
@@ -33,30 +38,60 @@ def lambda_handler(event, context):
         )
         return {
             'statusCode': 200,
-            'body': json.dumps('Password has been reset successfully.')
+            'body': json.dumps('Password has been reset successfully.'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
     except client.exceptions.CodeMismatchException:
         return {
             'statusCode': 400,
-            'body': json.dumps('Invalid confirmation code.')
+            'body': json.dumps('Invalid confirmation code.'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
     except client.exceptions.ExpiredCodeException:
         return {
             'statusCode': 400,
-            'body': json.dumps('Confirmation code has expired.')
+            'body': json.dumps('Confirmation code has expired.'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
     except client.exceptions.InvalidPasswordException as e:
         return {
             'statusCode': 400,
-            'body': json.dumps(f'Invalid password: {str(e)}')
+            'body': json.dumps(f'Invalid password: {str(e)}'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
     except client.exceptions.UserNotFoundException:
         return {
             'statusCode': 404,
-            'body': json.dumps('User not found.')
+            'body': json.dumps('User not found.'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': json.dumps('An error occurred while resetting the password: ' + str(e))
+            'body': json.dumps('An error occurred while resetting the password: ' + str(e)),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }

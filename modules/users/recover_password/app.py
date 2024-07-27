@@ -26,30 +26,55 @@ def lambda_handler(event, context):
         if not email:
             return {
                 'statusCode': 404,
-                'body': json.dumps('User email not found.')
+                'body': json.dumps('User email not found.'),
+                'headers': {
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST'
+                }
             }
 
         if email_verified != 'true':
             return {
                 'statusCode': 400,
-                'body': json.dumps('User email not verified.')
+                'body': json.dumps('User email not verified.'),
+                'headers': {
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST'
+                }
             }
 
         if user_status != 'CONFIRMED':
             return {
                 'statusCode': 400,
-                'body': json.dumps("User account hasn't been confirmed.")
+                'body': json.dumps("User account hasn't been confirmed."),
+                'headers': {
+                    'Access-Control-Allow-Headers': '*',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST'
+                }
             }
 
     except client.exceptions.UserNotFoundException:
         return {
             'statusCode': 404,
-            'body': json.dumps('User not found.')
+            'body': json.dumps('User not found.'),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': json.dumps('An error occurred while checking user existence: ' + str(e))
+            'body': json.dumps('An error occurred while checking user existence: ' + str(e)),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     try:
@@ -62,10 +87,20 @@ def lambda_handler(event, context):
         )
         return {
             'statusCode': 200,
-            'body': json.dumps(response['CodeDeliveryDetails'])
+            'body': json.dumps(response['CodeDeliveryDetails']),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': json.dumps('An error occurred: ' + str(e))
+            'body': json.dumps('An error occurred: ' + str(e)),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
