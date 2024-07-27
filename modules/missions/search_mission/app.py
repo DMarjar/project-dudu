@@ -150,8 +150,7 @@ def search_mission(body):
                    "status "
                    "FROM missions "
                    "WHERE id_user=%s "
-                   "AND (original_description LIKE %s "
-                   "OR fantasy_description LIKE %s) "
+                   "AND (original_description LIKE %s OR fantasy_description LIKE %s) "
                    "AND status=%s "
                    "ORDER BY %s %s "
                    "LIMIT %s OFFSET %s")
