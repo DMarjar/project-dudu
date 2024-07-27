@@ -31,18 +31,33 @@ def lambda_handler(event, __):
 
         response = {
             'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
             'body': json.dumps(missions)
         }
 
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
             'body': json.dumps(e.message)
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
             'body': json.dumps(str(e))
         }
 
@@ -76,7 +91,7 @@ def validate_body(body):
         raise HttpStatusCodeError(400, 'order cannot be null')
     if body['status'] is None or body['status'] == '':
         raise HttpStatusCodeError(400, 'status cannot be null')
-    if body['status'] not in ['pending', 'completed', 'cancelled', 'in_progress']:
+    if body['status'] not in ['pending', 'completed', 'cancelled', 'in_progress', 'failed']:
         raise HttpStatusCodeError(400, 'Invalid status')
 
     return True
