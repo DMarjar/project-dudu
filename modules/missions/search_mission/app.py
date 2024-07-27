@@ -52,13 +52,6 @@ def lambda_handler(event, __):
             'body': json.dumps(e.message)
         }
 
-    except Exception as e:
-        response = {
-            'statusCode': 500,
-            'headers': headers,
-            'body': json.dumps(str(e))
-        }
-
     return response
 
 
@@ -147,7 +140,7 @@ def search_mission(body):
             total = cursor.fetchone()['total']
 
             if total == 0:
-                return []
+                return [], total
 
             sql = ("SELECT id_mission, "
                    "original_description, "
