@@ -310,7 +310,7 @@ Resources:
           Properties:
             RestApiId: !Ref UsersApi
             Path: /exist_user
-            Method: get
+            Method: post
 
   RegisterAlexaUserFunction:
     Type: AWS::Serverless::Function
