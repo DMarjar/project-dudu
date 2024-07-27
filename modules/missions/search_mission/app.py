@@ -34,14 +34,14 @@ def lambda_handler(event, __):
         validate_user(body['id_user'])
 
         # Search missions
-        missions = search_mission(body)
+        missions, total = search_mission(body)
 
         response = {
             'statusCode': 200,
             'headers': headers,
             'body': json.dumps({
                 'missions': missions,
-                'total': len(missions)
+                'total': total
             })
         }
 
@@ -165,6 +165,6 @@ def search_mission(body):
             cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
                                  body['status'], body['order_by'], body['order'], limit, offset))
             missions = cursor.fetchall()
-            return missions
+            return missions, total
     finally:
         connection.close()
