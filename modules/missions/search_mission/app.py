@@ -13,11 +13,18 @@ def lambda_handler(event, __):
         - order_by (str): The field to order the results
         - order (str): The order of the results
         - status (str): The status of the mission
+        - page (int): The page number for pagination
 
     Returns:
-        dict: A dictionary that contains the status code and a message
+        dict: A dictionary that contains the status code and a message, the mission list and the pagination information
     """
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+    }
     try:
+
         body = json.loads(event['body'])
 
         # Validate payload
@@ -31,33 +38,24 @@ def lambda_handler(event, __):
 
         response = {
             'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
-            'body': json.dumps(missions)
+            'headers': headers,
+            'body': json.dumps({
+                'missions': missions,
+                'total': len(missions)
+            })
         }
 
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
+            'headers': headers,
             'body': json.dumps(e.message)
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
+            'headers': headers,
             'body': json.dumps(str(e))
         }
 
@@ -85,6 +83,8 @@ def validate_body(body):
         raise HttpStatusCodeError(400, 'order is required')
     if 'status' not in body:
         raise HttpStatusCodeError(400, 'status is required')
+    if 'page' not in body or not isinstance(body['page'], int) or body['page'] < 1:
+        raise HttpStatusCodeError(400, 'invalid page')
     if body['order_by'] is None or body['order_by'] == '':
         raise HttpStatusCodeError(400, 'order_by cannot be null')
     if body['order'] is None or body['order'] == '':
@@ -133,14 +133,31 @@ def search_mission(body):
     connection = get_db_connection()
     try:
         with connection.cursor(DictCursor) as cursor:
+            limit = 1
+            offset = (body['page'] - 1) * limit
+
+            # Get the total number of missions
+            sql = ("SELECT COUNT(*) as total FROM missions "
+                   "WHERE id_user=%s "
+                   "AND (original_description LIKE %s "
+                   "OR fantasy_description LIKE %s) "
+                   "AND status=%s")
+            cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}",
+                                 body['status']))
+            total = cursor.fetchone()['total']
+
+            if total == 0:
+                return []
+
             sql = ("SELECT * FROM missions "
                    "WHERE id_user=%s "
                    "AND (original_description LIKE %s "
                    "OR fantasy_description LIKE %s) "
                    "AND status=%s "
-                   "ORDER BY %s %s")
+                   "ORDER BY %s %s"
+                   "LIMIT %s OFFSET %s")
             cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
-                                 body['status'], body['order_by'], body['order']))
+                                 body['status'], body['order_by'], body['order'], limit, offset))
             missions = cursor.fetchall()
             return missions
     finally:
