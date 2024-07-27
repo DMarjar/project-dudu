@@ -85,6 +85,13 @@ def lambda_handler(event, context):
             Username=email,
             SecretHash=secret_hash
         )
+
+        response['headers'] = {
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST'
+        }
+
         return {
             'statusCode': 200,
             'body': json.dumps(response['CodeDeliveryDetails']),

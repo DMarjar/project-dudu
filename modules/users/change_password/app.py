@@ -36,6 +36,13 @@ def lambda_handler(event, context):
             Password=new_password,
             SecretHash=secret_hash
         )
+
+        response['headers'] = {
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST'
+        }
+
         return {
             'statusCode': 200,
             'body': json.dumps('Password has been reset successfully.'),
