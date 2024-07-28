@@ -150,11 +150,11 @@ def search_mission(body):
                    "status "
                    "FROM missions "
                    "WHERE id_user=%s "
-                   "AND (fantasy_description LIKE %s) "
+                   "AND (original_description LIKE %s OR fantasy_description LIKE %s) "
                    "AND status=%s "
                    "ORDER BY %s %s "
                    "LIMIT %s OFFSET %s")
-            cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%",
+            cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
                                  body['status'], body['order_by'], body['order'], limit, offset)
                            )
             missions = cursor.fetchall()
