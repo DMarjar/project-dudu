@@ -124,6 +124,15 @@ def search_mission(body):
     Returns:
         missions (list): A list of missions
     """
+    # List of allowed columns to order by
+    allowed_order_by = {'creation_date', 'due_date'}
+    # List of allowed order directions
+    allowed_order = {'ASC', 'DESC'}
+
+    # Sanitize and validate order_by and order
+    order_by = body['order_by'] if body['order_by'] in allowed_order_by else 'id_mission'
+    order = body['order'].upper() if body['order'].upper() in allowed_order else 'ASC'
+
     connection = get_db_connection()
     try:
         with connection.cursor(DictCursor) as cursor:
@@ -145,23 +154,22 @@ def search_mission(body):
                 return [], total
 
             # Get the missions
-            sql = ("SELECT id_mission, "
-                   "original_description, "
-                   "fantasy_description, "
-                   "creation_date, "
-                   "due_date, "
-                   "status "
-                   "FROM missions "
-                   "WHERE id_user=%s "
-                   "AND (original_description LIKE %s OR fantasy_description LIKE %s) "
-                   "AND status=%s "
-                   "ORDER BY %s %s "
-                   "LIMIT %s OFFSET %s")
+            sql = (f"SELECT id_mission, "
+                   f"original_description, "
+                   f"fantasy_description, "
+                   f"creation_date, "
+                   f"due_date, "
+                   f"status "
+                   f"FROM missions "
+                   f"WHERE id_user=%s "
+                   f"AND (original_description LIKE %s OR fantasy_description LIKE %s) "
+                   f"AND status=%s "
+                   f"ORDER BY {order_by} {order} "
+                   f"LIMIT %s OFFSET %s")
             cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
-                                 body['status'], body['order_by'], body['order'], limit, offset)
+                                 body['status'], limit, offset)
                            )
             missions = cursor.fetchall()
             return missions, total
     finally:
         connection.close()
-
