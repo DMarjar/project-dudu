@@ -150,8 +150,8 @@ def search_mission(body):
                    "status "
                    "FROM missions "
                    "WHERE id_user=%s "
-                   "AND (original_description LIKE %s OR fantasy_description LIKE %s) "
                    "AND status=%s "
+                   "AND (original_description LIKE %s OR fantasy_description LIKE %s) "
                    "ORDER BY %s %s "
                    "LIMIT %s OFFSET %s")
             cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
