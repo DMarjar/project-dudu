@@ -119,6 +119,7 @@ def search_mission(body):
             - order_by (str): The field to order the results
             - order (str): The order of the results
             - status (str): The status of the mission
+            - page (int): The page number for pagination
 
     Returns:
         missions (list): A list of missions
@@ -139,9 +140,11 @@ def search_mission(body):
                                  body['status']))
             total = cursor.fetchone()['total']
 
+            # If there are no missions, return an empty list
             if total == 0:
                 return [], total
 
+            # Get the missions
             sql = ("SELECT id_mission, "
                    "original_description, "
                    "fantasy_description, "
@@ -150,8 +153,8 @@ def search_mission(body):
                    "status "
                    "FROM missions "
                    "WHERE id_user=%s "
-                   "AND status=%s "
                    "AND (original_description LIKE %s OR fantasy_description LIKE %s) "
+                   "AND status=%s "
                    "ORDER BY %s %s "
                    "LIMIT %s OFFSET %s")
             cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
