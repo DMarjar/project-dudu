@@ -136,7 +136,7 @@ def search_mission(body):
                    "AND (original_description LIKE %s "
                    "OR fantasy_description LIKE %s) "
                    "AND status=%s")
-            cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}",
+            cursor.execute(sql, (body['id_user'], f"%{body['search_query']}%", f"%{body['search_query']}%",
                                  body['status']))
             total = cursor.fetchone()['total']
 
@@ -164,3 +164,4 @@ def search_mission(body):
             return missions, total
     finally:
         connection.close()
+
