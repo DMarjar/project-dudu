@@ -312,6 +312,23 @@ Resources:
             Path: /exist_user
             Method: post
 
+  MageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/mage/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        Mage:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MageApi
+            Path: /mage
+            Method: post
+
   RegisterAlexaUserFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -343,6 +360,16 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       Name: UsersApi
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+  MageApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: MageApi
       StageName: Prod
       Cors:
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
@@ -405,6 +432,9 @@ Outputs:
   RegisterAlexaUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Register Alexa User function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_alexa_user/"
+  MageApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Mage function"
+    Value: !Sub "https://${MageApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mage/"
 
 
   GetAllMissionsFunctionArn:
@@ -458,3 +488,6 @@ Outputs:
   RegisterAlexaUserFunctionArn:
     Description: "Register Alexa User Lambda Function ARN"
     Value: !GetAtt RegisterAlexaUserFunction.Arn
+  MageFunctionArn:
+    Description: "Mage Lambda Function ARN"
+    Value: !GetAtt MageFunction.Arn

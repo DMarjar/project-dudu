@@ -81,14 +81,12 @@ jobs:
         run: |
           cd modules/users/login
           pip install -r requirements.txt
-      - name: Install dependencies for exist_user
+      - name: Install dependencies for mage
         run: |
-          cd modules/users/exist_user
+          cd modules/mage
           pip install -r requirements.txt
-      - name: Install dependencies for register_alexa_user
-        run: |
-          cd modules/users/register_alexa_user
-          pip install -r requirements.txt
+          
+
       - name: Install AWS CLI
         run: |
           sudo apt-get update
