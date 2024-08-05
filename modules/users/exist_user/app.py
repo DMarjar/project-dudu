@@ -1,7 +1,7 @@
 import json
 
-from common.httpStatusCodeError import HttpStatusCodeError
-from common.db_connection import get_db_connection
+from .common.httpStatusCodeError import HttpStatusCodeError
+from .common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
@@ -45,7 +45,7 @@ def lambda_handler(event, ___):
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
-            'body': json.dumps("Internal Server Error" + str(e)),
+            'body': json.dumps(str(e)),
         }
 
     return response

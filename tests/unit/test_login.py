@@ -1,7 +1,7 @@
 import json
+import unittest
+from unittest.mock import patch, MagicMock
 from modules.users.login import app
-from unittest import TestCase
-import pytest
 
 EVENT = {
     'body': json.dumps({
@@ -11,6 +11,8 @@ EVENT = {
 }
 
 
-class Test(TestCase):
+class Test(unittest.TestCase):
     def test_lambda_handler(self):
-        print(app.lambda_handler(EVENT, None))
+        response = app.lambda_handler(EVENT, None)
+
+        print(response)
