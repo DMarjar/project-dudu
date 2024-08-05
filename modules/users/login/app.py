@@ -61,7 +61,7 @@ def lambda_handler(event, ___):
 
     except Exception as e:
         response = {
-            'statusCode': 500,
+            'statusCode': 401,
             'headers': {
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Origin': '*',
