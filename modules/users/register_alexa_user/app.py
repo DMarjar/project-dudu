@@ -21,7 +21,7 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
-            'body': json.dumps(first_title),
+            'body': first_title[0],
             'headers': {
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Origin': '*',
@@ -120,4 +120,4 @@ def get_first_title():
         raise HttpStatusCodeError(500, "Error getting first title")
     finally:
         connection.close()
-    return result['wizard_title']
+    return result
