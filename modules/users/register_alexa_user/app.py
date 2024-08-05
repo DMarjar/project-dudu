@@ -8,6 +8,7 @@ def lambda_handler(event, ___):
     try:
         body = json.loads(event['body'])
 
+        """
         validate_body(body)
 
         # Save user on DB
@@ -18,10 +19,21 @@ def lambda_handler(event, ___):
 
         # Get first title
         first_title = get_first_title()
+        
 
         response = {
             'statusCode': 200,
             'body': first_title[0],
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
+        }"""
+
+        response = {
+            'statusCode': 200,
+            'body': body['username'] + " " + body['id_user'] + " " + "M",
             'headers': {
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Origin': '*',
