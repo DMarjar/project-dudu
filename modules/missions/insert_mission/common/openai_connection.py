@@ -3,7 +3,7 @@ import json
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from openai import OpenAI
-from httpStatusCodeError import HttpStatusCodeError
+from .httpStatusCodeError import HttpStatusCodeError
 
 
 # function to get openai client
