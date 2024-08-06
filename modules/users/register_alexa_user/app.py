@@ -1,7 +1,7 @@
 import json
 
-from .common.httpStatusCodeError import HttpStatusCodeError
-from .common.db_connection import get_db_connection
+from common.httpStatusCodeError import HttpStatusCodeError
+from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
@@ -16,9 +16,12 @@ def lambda_handler(event, ___):
         # Give basic rewards
         give_basic_rewards(body['id_user'])
 
+        # Get first title
+        first_title = get_first_title()
+
         response = {
             'statusCode': 200,
-            'body': json.dumps("User registered successfully"),
+            'body': first_title[0],
             'headers': {
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Origin': '*',
@@ -103,3 +106,18 @@ def give_basic_rewards(id_user):
     finally:
         connection.close()
     return True
+
+
+def get_first_title():
+    connection = get_db_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT wizard_title FROM rewards WHERE id_reward = 1"
+            cursor.execute(sql)
+            result = cursor.fetchone()
+    except Exception as e:
+        raise HttpStatusCodeError(500, "Error getting first title")
+    finally:
+        connection.close()
+    return result
