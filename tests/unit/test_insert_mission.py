@@ -8,6 +8,7 @@ EVENT = {
         'original_description': 'test',
         'id_user': 1,
         'creation_date': '2022-01-01',
+        'due_date': '2022-01-01',
         'status': 'pending'
     })
 }
@@ -47,6 +48,7 @@ class Test(unittest.TestCase):
             'body': json.dumps({
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -60,6 +62,7 @@ class Test(unittest.TestCase):
                 'original_description': None,
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -73,6 +76,7 @@ class Test(unittest.TestCase):
                 'original_description': 123,
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -86,6 +90,7 @@ class Test(unittest.TestCase):
                 'original_description': '',
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -98,6 +103,7 @@ class Test(unittest.TestCase):
             'body': json.dumps({
                 'original_description': 'test',
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -111,6 +117,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': None,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -123,6 +130,7 @@ class Test(unittest.TestCase):
             'body': json.dumps({
                 'original_description': 'test',
                 'id_user': 1,
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -136,6 +144,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': 1,
                 'creation_date': None,
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -149,6 +158,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': 1,
                 'creation_date': '01-01-2022',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -156,12 +166,55 @@ class Test(unittest.TestCase):
         response = app.lambda_handler(body_creation_date_is_incorrect_format, None)
         self.assertEqual(response['body'], '"Incorrect creation_date format, should be YYYY-MM-DD"')
 
+
+    def test_no_due_date(self):
+        body_no_due_date = {
+            'body': json.dumps({
+                'original_description': 'test',
+                'id_user': 1,
+                'creation_date': '2022-01-01',
+                'status': 'pending'
+            })
+        }
+
+        response = app.lambda_handler(body_no_due_date, None)
+        self.assertEqual(response['body'], '"due_date is required"')
+
+    def test_due_date_is_none(self):
+        body_due_date_is_none = {
+            'body': json.dumps({
+                'original_description': 'test',
+                'id_user': 1,
+                'creation_date': '2022-01-01',
+                'due_date': None,
+                'status': 'pending'
+            })
+        }
+
+        response = app.lambda_handler(body_due_date_is_none, None)
+        self.assertEqual(response['body'], '"due_date is required"')
+
+    def test_due_date_is_incorrect_format(self):
+        body_due_date_is_incorrect_format = {
+            'body': json.dumps({
+                'original_description': 'test',
+                'id_user': 1,
+                'creation_date': '2022-01-01',
+                'due_date': '01-01-2022',
+                'status': 'pending'
+            })
+        }
+
+        response = app.lambda_handler(body_due_date_is_incorrect_format, None)
+        self.assertEqual(response['body'], '"Incorrect due_date format, should be YYYY-MM-DD"')
+
     def test_no_status(self):
         body_no_status = {
             'body': json.dumps({
                 'original_description': 'test',
                 'id_user': 1,
-                'creation_date': '2022-01-01'
+                'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
             })
         }
 
@@ -174,6 +227,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': None
             })
         }
@@ -187,6 +241,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'invalid'
             })
         }

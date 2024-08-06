@@ -107,6 +107,18 @@ def validate_body(body):
     except ValueError:
         raise HttpStatusCodeError(400, "Incorrect creation_date format, should be YYYY-MM-DD")
 
+    # Validate due_date
+    if 'due_date' not in body:
+        raise HttpStatusCodeError(400, "due_date is required")
+
+    if body['due_date'] is None:
+        raise HttpStatusCodeError(400, "due_date is required")
+
+    try:
+        datetime.strptime(body['due_date'], '%Y-%m-%d')
+    except ValueError:
+        raise HttpStatusCodeError(400, "Incorrect due_date format, should be YYYY-MM-DD")
+
     # Validate status
     if 'status' not in body:
         raise HttpStatusCodeError(400, "status is required")
@@ -149,9 +161,9 @@ def insert_mission(body):
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            sql = "INSERT INTO missions (original_description, fantasy_description, creation_date, status, id_user) VALUES (%s, %s, %s, %s, %s)"
+            sql = "INSERT INTO missions (original_description, fantasy_description, creation_date, status, due_date, id_user) VALUES (%s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, (
-                body['original_description'], body['fantasy_description'], body['creation_date'], body['status'],
+                body['original_description'], body['fantasy_description'], body['creation_date'], body['due_date'],  body['status'],
                 body['id_user']))
         connection.commit()
     except Exception:
