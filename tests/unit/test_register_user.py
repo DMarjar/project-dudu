@@ -6,7 +6,7 @@ from modules.users.register_user import app
 EVENT = {
     'body': json.dumps({
         'email': '20213tn105@utez.edu.mx',
-        'username': 'Gislane',
+        'username': 'Atoferatofe',
         'gender': 'M'
     })
 }
