@@ -163,7 +163,7 @@ def insert_mission(body):
         with connection.cursor() as cursor:
             sql = "INSERT INTO missions (original_description, fantasy_description, creation_date, status, due_date, id_user) VALUES (%s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, (
-                body['original_description'], body['fantasy_description'], body['creation_date'], body['due_date'],  body['status'],
+                body['original_description'], body['fantasy_description'], body['creation_date'], body['status'], body['due_date'],
                 body['id_user']))
         connection.commit()
     except Exception:
