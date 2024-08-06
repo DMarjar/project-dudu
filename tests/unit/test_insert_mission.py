@@ -15,11 +15,16 @@ EVENT = {
 
 class Test(unittest.TestCase):
 
+    def test_lambda_handler(self):
+        response = app.lambda_handler(EVENT, None)
+        self.assertEqual(response['body'], '"Mission inserted successfully"')
+
+
     @patch('modules.missions.insert_mission.app.insert_mission')
     @patch('modules.missions.insert_mission.app.get_openai_client')
     @patch('modules.missions.insert_mission.app.validate_user')
     @patch('modules.missions.insert_mission.common.db_connection.get_secrets')
-    def test_lambda_handler(self, mock_get_secrets, mock_validate_user, mock_get_openai_client, mock_insert_mission):
+    def test_success_lambda_handler(self, mock_get_secrets, mock_validate_user, mock_get_openai_client, mock_insert_mission):
         mock_get_secrets.return_value = {
             'username': 'admin',
             'password': 'admin',
