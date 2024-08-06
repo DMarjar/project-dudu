@@ -38,19 +38,34 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
-            'body': json.dumps("Mission inserted successfully")
+            'body': json.dumps("Mission inserted successfully"),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps(e.message)
+            'body': json.dumps(e.message),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps(str(e))
+            'body': json.dumps(str(e)),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     return response
