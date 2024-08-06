@@ -40,23 +40,6 @@ Resources:
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
 
-  GetAllMissionsFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: modules/missions/get_all_missions/
-      Handler: app.lambda_handler
-      Runtime: python3.12
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Architectures:
-        - x86_64
-      Events:
-        GetAllMissions:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MissionApi
-            Path: /get_all_missions
-            Method: get
-
   MissionExpirationFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -354,9 +337,6 @@ Outputs:
     Description: "Implicit IAM Role created for Lambda function"
     Value: !GetAtt LambdaExecutionRole.Arn
 
-  GetAllMissionsApiUrl:
-    Description: "API Gateway endpoint URL for Prod stage for Get All Missions function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_all_missions/"
   MissionExpirationApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Mission Expiration function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mission_expiration/"
@@ -407,9 +387,6 @@ Outputs:
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_alexa_user/"
 
 
-  GetAllMissionsFunctionArn:
-    Description: "Get All Missions Lambda Function ARN"
-    Value: !GetAtt GetAllMissionsFunction.Arn
   MissionExpirationFunctionArn:
     Description: "Expires Missions Lambda Function ARN"
     Value: !GetAtt MissionExpirationFunction.Arn
