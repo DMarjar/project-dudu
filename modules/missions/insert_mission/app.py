@@ -38,7 +38,7 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
-            'body': json.dumps("Mission inserted successfully"),
+            'body': json.dumps(fantasy_description),
             'headers': {
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Origin': '*',
