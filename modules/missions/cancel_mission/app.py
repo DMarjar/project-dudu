@@ -14,6 +14,11 @@ def lambda_handler(event, ___):
         dict: A dictionary that contains the status code and a message
     """
 
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
+    }
     try:
         body = json.loads(event['body'])
 
@@ -28,6 +33,7 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
+            'headers': headers,
             'body': json.dumps("Mission cancelled successfully")
         }
 
@@ -35,6 +41,7 @@ def lambda_handler(event, ___):
         print(e.message)
         response = {
             'statusCode': e.status_code,
+            'headers': headers,
             'body': json.dumps(e.message)
         }
 
