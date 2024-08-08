@@ -69,9 +69,6 @@ def validate_body(body):
     if body['id_user'] is None:
         raise HttpStatusCodeError(400, "id_user is required")
 
-    if not isinstance(body['id_user'], int):
-        raise HttpStatusCodeError(400, "id_user must be an integer")
-
     return True
 
 
