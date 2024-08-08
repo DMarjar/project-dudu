@@ -7,7 +7,7 @@ from unittest import TestCase
 EVENT = {
     'body': json.dumps({
         'username': 'Gislane',
-        'password': 'WR2c}LY_7}mz',
+        'password': 'p?jl1#&HutH}',
         'new_password': '20213Tn105!'
     })
 }

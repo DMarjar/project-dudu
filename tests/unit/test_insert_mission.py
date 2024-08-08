@@ -8,6 +8,7 @@ EVENT = {
         'original_description': 'test',
         'id_user': 1,
         'creation_date': '2022-01-01',
+        'due_date': '2022-01-01',
         'status': 'pending'
     })
 }
@@ -15,11 +16,16 @@ EVENT = {
 
 class Test(unittest.TestCase):
 
+    def test_lambda_handler(self):
+        response = app.lambda_handler(EVENT, None)
+        self.assertEqual(response['body'], '"Mission inserted successfully"')
+
+
     @patch('modules.missions.insert_mission.app.insert_mission')
     @patch('modules.missions.insert_mission.app.get_openai_client')
     @patch('modules.missions.insert_mission.app.validate_user')
     @patch('modules.missions.insert_mission.common.db_connection.get_secrets')
-    def test_lambda_handler(self, mock_get_secrets, mock_validate_user, mock_get_openai_client, mock_insert_mission):
+    def test_success_lambda_handler(self, mock_get_secrets, mock_validate_user, mock_get_openai_client, mock_insert_mission):
         mock_get_secrets.return_value = {
             'username': 'admin',
             'password': 'admin',
@@ -42,6 +48,7 @@ class Test(unittest.TestCase):
             'body': json.dumps({
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -55,6 +62,7 @@ class Test(unittest.TestCase):
                 'original_description': None,
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -68,6 +76,7 @@ class Test(unittest.TestCase):
                 'original_description': 123,
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -81,6 +90,7 @@ class Test(unittest.TestCase):
                 'original_description': '',
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -93,6 +103,7 @@ class Test(unittest.TestCase):
             'body': json.dumps({
                 'original_description': 'test',
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -106,6 +117,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': None,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -118,6 +130,7 @@ class Test(unittest.TestCase):
             'body': json.dumps({
                 'original_description': 'test',
                 'id_user': 1,
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -131,6 +144,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': 1,
                 'creation_date': None,
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -144,6 +158,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': 1,
                 'creation_date': '01-01-2022',
+                'due_date': '2022-01-01',
                 'status': 'pending'
             })
         }
@@ -151,12 +166,55 @@ class Test(unittest.TestCase):
         response = app.lambda_handler(body_creation_date_is_incorrect_format, None)
         self.assertEqual(response['body'], '"Incorrect creation_date format, should be YYYY-MM-DD"')
 
+
+    def test_no_due_date(self):
+        body_no_due_date = {
+            'body': json.dumps({
+                'original_description': 'test',
+                'id_user': 1,
+                'creation_date': '2022-01-01',
+                'status': 'pending'
+            })
+        }
+
+        response = app.lambda_handler(body_no_due_date, None)
+        self.assertEqual(response['body'], '"due_date is required"')
+
+    def test_due_date_is_none(self):
+        body_due_date_is_none = {
+            'body': json.dumps({
+                'original_description': 'test',
+                'id_user': 1,
+                'creation_date': '2022-01-01',
+                'due_date': None,
+                'status': 'pending'
+            })
+        }
+
+        response = app.lambda_handler(body_due_date_is_none, None)
+        self.assertEqual(response['body'], '"due_date is required"')
+
+    def test_due_date_is_incorrect_format(self):
+        body_due_date_is_incorrect_format = {
+            'body': json.dumps({
+                'original_description': 'test',
+                'id_user': 1,
+                'creation_date': '2022-01-01',
+                'due_date': '01-01-2022',
+                'status': 'pending'
+            })
+        }
+
+        response = app.lambda_handler(body_due_date_is_incorrect_format, None)
+        self.assertEqual(response['body'], '"Incorrect due_date format, should be YYYY-MM-DD"')
+
     def test_no_status(self):
         body_no_status = {
             'body': json.dumps({
                 'original_description': 'test',
                 'id_user': 1,
-                'creation_date': '2022-01-01'
+                'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
             })
         }
 
@@ -169,6 +227,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': None
             })
         }
@@ -182,6 +241,7 @@ class Test(unittest.TestCase):
                 'original_description': 'test',
                 'id_user': 1,
                 'creation_date': '2022-01-01',
+                'due_date': '2022-01-01',
                 'status': 'invalid'
             })
         }

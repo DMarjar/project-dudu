@@ -32,7 +32,7 @@ def lambda_handler(event, ___):
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps("An error occurred: " + str(e)),
+            'body': json.dumps(str(e.message)),
             'headers': {
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Origin': '*',
@@ -47,7 +47,7 @@ def lambda_handler(event, ___):
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST'
             },
-            'body': json.dumps("An unexpected error occurred: " + str(e)),
+            'body': json.dumps(str(e)),
         }
 
     return response
