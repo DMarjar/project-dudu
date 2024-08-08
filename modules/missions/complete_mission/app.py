@@ -1,12 +1,19 @@
 import json
 from common.db_connection import get_db_connection
 
+
 def lambda_handler(event, __):
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS, GET, PUT, DELETE',
+        'Access-Control-Allow-Headers': 'Content-Type',
+    }
     try:
         body = json.loads(event['body'])
         if not body:
             response = {
                 'statusCode': 400,
+                'headers': headers,
                 'body': json.dumps({"message": "Bad request: Body is required"})
             }
             return response
@@ -16,6 +23,7 @@ def lambda_handler(event, __):
         if id_mission is None:
             response = {
                 'statusCode': 402,
+                'headers': headers,
                 'body': json.dumps({"message": "Bad request: id of mission is required"})
             }
             return response
@@ -24,17 +32,20 @@ def lambda_handler(event, __):
             update_mission_status(id_mission, 'completed')
             response = {
                 'statusCode': 200,
+                'headers': headers,
                 'body': json.dumps({"message": f"Mission {id_mission} completed successfully"})
             }
         else:
             response = {
                 'statusCode': 404,
+                'headers': headers,
                 'body': json.dumps({"message": "Mission not found"})
             }
 
     except Exception as e:
         response = {
             'statusCode': 500,
+            'headers': headers,
             'body': json.dumps({"message": f"An error occurred while completing the mission: {str(e)}"})
         }
     return response
@@ -50,5 +61,3 @@ def update_mission_status(id_mission, status):
             connection.commit()
     finally:
         connection.close()
-
-
