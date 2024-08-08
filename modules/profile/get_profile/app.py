@@ -7,12 +7,19 @@ from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, __):
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+    }
     try:
-        profile_id = event.get('pathParameters', {}).get('id_user')
+        body = json.loads(event['body'])
+        profile_id = body['id_user']
 
         if profile_id is None:
             response = {
                 'statusCode': 402,
+                'headers': headers,
                 'body': json.dumps({"message": "Bad request: ID is required"})
             }
             return response
@@ -20,6 +27,7 @@ def lambda_handler(event, __):
         if not isinstance(profile_id, str):
             response = {
                 'statusCode': 402,
+                'headers': headers,
                 'body': json.dumps({"message": "Bad request: ID must be a string"})
             }
             return response
@@ -27,6 +35,7 @@ def lambda_handler(event, __):
         if profile_id is None:
             response = {
                 'statusCode': 402,
+                'headers': headers,
                 'body': json.dumps({"message": "Bad request: ID is required"})
             }
             return response
@@ -34,6 +43,7 @@ def lambda_handler(event, __):
         if not profile_id.strip():
             response = {
                 'statusCode': 402,
+                'headers': headers,
                 'body': json.dumps({"message": "Bad request: ID cannot be empty"})
             }
             return response
@@ -45,6 +55,7 @@ def lambda_handler(event, __):
         if not cognito_data:
             return {
                 'statusCode': 404,
+                'headers': headers,
                 'body': json.dumps({"message": "User not found in Cognito"})
             }
 
@@ -53,6 +64,7 @@ def lambda_handler(event, __):
         if not profile:
             return {
                 'statusCode': 404,
+                'headers': headers,
                 'body': json.dumps({"message": "User not found in the database"})
             }
 
@@ -63,12 +75,14 @@ def lambda_handler(event, __):
 
         response = {
             'statusCode': 200,
+            'headers': headers,
             'body': json.dumps(combined_data)
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
+            'headers': headers,
             'body': json.dumps({"message": f"An error occurred: {str(e)}"})
         }
 
