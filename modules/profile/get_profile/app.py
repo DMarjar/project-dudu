@@ -72,9 +72,7 @@ def lambda_handler(event, __):
         response = {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({
-                'profile': profile
-            })
+            'body': json.dumps(profile)
         }
 
     except Exception as e:
@@ -107,7 +105,7 @@ def get_profile(user_id):
     try:
         with connection.cursor(DictCursor) as cursor:
             sql = """ SELECT u.id_user, u.level, u.current_xp, u.gender,
-                       r.id_reward, r.image_wizard, r.image_sorceress, r.unlock_level
+                       r.id_reward, r.unlock_level, r.wizard_title
                 FROM users u
                 LEFT JOIN rewards r ON u.level >= r.unlock_level
                 WHERE u.id_user = %s
