@@ -48,35 +48,30 @@ def lambda_handler(event, __):
             }
             return response
 
-        # Obtener datos de Cognito
-        secrets = get_secret()
+        # Validate if the user exists in the database
+        user_found = validate_user(profile_id)
 
-        cognito_data = get_cognito_data(profile_id, secrets)
-        if not cognito_data:
+        if not user_found:
             return {
                 'statusCode': 404,
                 'headers': headers,
-                'body': json.dumps({"message": "User not found in Cognito"})
+                'body': json.dumps({"message": "User not found"})
             }
 
         # Obtener datos de la base de datos
         profile = get_profile(profile_id)
+
         if not profile:
             return {
                 'statusCode': 404,
                 'headers': headers,
-                'body': json.dumps({"message": "User not found in the database"})
+                'body': json.dumps({"message": "No profile information found"})
             }
-
-        combined_data = {
-            "cognito_data": cognito_data,
-            "profile_data": profile
-        }
 
         response = {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps(combined_data)
+            'body': json.dumps(profile)
         }
 
     except Exception as e:
@@ -89,23 +84,19 @@ def lambda_handler(event, __):
     return response
 
 
-def get_cognito_data(user_id, secrets):
-    client = boto3.client('cognito-idp', region_name='us-east-2')
-    user_pool_id = secrets['USER_POOL_ID']
-
+def validate_user(user_id):
+    connection = get_db_connection()
     try:
-        response = client.admin_get_user(
-            UserPoolId=user_pool_id,
-            Username=user_id
-        )
-        attributes = {attr['Name']: attr['Value'] for attr in response['UserAttributes']}
-        cognito_data = {
-            "username": attributes.get('preferred_username', ''),
-            "email": attributes.get('email', '')
-        }
-        return cognito_data
-    except client.exceptions.UserNotFoundException:
-        return None
+        with connection.cursor(DictCursor) as cursor:
+            sql = """ SELECT COUNT(id_user) as user_count
+                FROM users
+                WHERE id_user = %s
+            """
+            cursor.execute(sql, (user_id,))
+            user_data = cursor.fetchone()
+            return user_data
+    finally:
+        connection.close()
 
 
 def get_profile(user_id):
