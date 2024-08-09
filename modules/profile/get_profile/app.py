@@ -51,12 +51,13 @@ def lambda_handler(event, __):
         # Validate if the user exists in the database
         user_found = validate_user(profile_id)
 
-        if not user_found:
-            return {
+        if user_found['user_count'] == 0:
+            response = {
                 'statusCode': 404,
                 'headers': headers,
                 'body': json.dumps({"message": "User not found"})
             }
+            return response
 
         # Obtener datos de la base de datos
         profile = get_profile(profile_id)
@@ -71,7 +72,9 @@ def lambda_handler(event, __):
         response = {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps(profile)
+            'body': json.dumps({
+                'profile': profile
+            })
         }
 
     except Exception as e:
