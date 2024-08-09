@@ -29,11 +29,9 @@ def lambda_handler(event, __):
             }
 
         if isinstance(id_mission, int) and isinstance(id_user, int):
-            # Inicia la transacción
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:
-                    #Verificar que el current_xp no sea mayor al xp_limit
                     cursor.execute("SELECT current_xp, xp_limit, level FROM users WHERE id_user = %s FOR UPDATE", (id_user,))
                     user = cursor.fetchone()
                     if not user:
@@ -44,33 +42,41 @@ def lambda_handler(event, __):
                     if current_xp >= xp_limit:
                         raise Exception("User's XP is already at the limit")
 
-                    # Crear un número random entre 1 y 25
-                    random_xp = random.randint(1, 25)
-
-                    # Completar la misión
+                    random_xp = random.randint(10, 35)
                     cursor.execute("UPDATE missions SET status = 'completed' WHERE id_mission = %s", (id_mission,))
-
-                    # Sumar el número random al current_xp
                     new_current_xp = current_xp + random_xp
 
-                    # Verificar si al sumar el XP excede el límite
                     if new_current_xp >= xp_limit:
-                        # Subir de nivel y resetear el XP
                         new_level = level + 1
                         new_current_xp = new_current_xp - xp_limit
                         new_limit_xp = xp_limit + 10
-                        cursor.execute("UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s", (new_level, new_current_xp, new_limit_xp , id_user))
+                        cursor.execute("UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s",
+                                       (new_level, new_current_xp, new_limit_xp, id_user))
+
+                        # Retornar los datos del perfil actualizados
+                        response = {
+                            'statusCode': 200,
+                            'headers': headers,
+                            'body': json.dumps({
+                                "message": f"Mission {id_mission} completed successfully and XP updated. Level Up!",
+                                "user_profile": {
+                                    "id_user": id_user,
+                                    "level": new_level,
+                                    "current_xp": new_current_xp,
+                                    "xp_limit": new_limit_xp
+                                }
+                            })
+                        }
+
                     else:
-                        # actualizar el XP
                         cursor.execute("UPDATE users SET current_xp = %s WHERE id_user = %s", (new_current_xp, id_user))
+                        response = {
+                            'statusCode': 200,
+                            'headers': headers,
+                            'body': json.dumps({"message": f"Mission {id_mission} completed successfully and XP updated"})
+                        }
 
                     connection.commit()
-
-                response = {
-                    'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps({"message": f"Mission {id_mission} completed successfully and XP updated"})
-                }
 
             except Exception as e:
                 connection.rollback()
