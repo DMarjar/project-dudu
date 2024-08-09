@@ -14,6 +14,7 @@ def lambda_handler(event, __):
         - order (str): The order of the results
         - status (str): The status of the mission
         - page (int): The page number for pagination
+        - limit (int): The number of results per page
 
     Returns:
         dict: A dictionary that contains the status code and a message, the mission list and the pagination information
@@ -78,6 +79,8 @@ def validate_body(body):
         raise HttpStatusCodeError(400, 'status is required')
     if 'page' not in body or not isinstance(body['page'], int) or body['page'] < 1:
         raise HttpStatusCodeError(400, 'invalid page')
+    if 'limit' not in body or not isinstance(body['limit'], int) or body['limit'] < 1:
+        raise HttpStatusCodeError(400, 'invalid limit')
     if body['order_by'] is None or body['order_by'] == '':
         raise HttpStatusCodeError(400, 'order_by cannot be null')
     if body['order'] is None or body['order'] == '':
@@ -120,6 +123,7 @@ def search_mission(body):
             - order (str): The order of the results
             - status (str): The status of the mission
             - page (int): The page number for pagination
+            - limit (int): The number of results per page
 
     Returns:
         missions (list): A list of missions
@@ -136,7 +140,7 @@ def search_mission(body):
     connection = get_db_connection()
     try:
         with connection.cursor(DictCursor) as cursor:
-            limit = 6
+            limit = body['limit']
             offset = (body['page'] - 1) * limit
 
             # Get the total number of missions

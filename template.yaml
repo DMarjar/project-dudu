@@ -139,7 +139,7 @@ Resources:
           Properties:
             RestApiId: !Ref UsersApi
             Path: /get_profile
-            Method: get
+            Method: post
 
   UpdateProfileFunction:
     Type: AWS::Serverless::Function
