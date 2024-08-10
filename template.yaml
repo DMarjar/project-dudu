@@ -17,28 +17,57 @@ Globals:
 
 
 Resources:
-  # Referencia a la instancia RDS existente
-  ExistingRDSInstance:
+  # Creación de la instancia RDS
+  MyRDSInstance:
     Type: AWS::RDS::DBInstance
     Properties:
-      DBInstanceIdentifier: dududb
+      DBName: dududb2
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: MySQL
+      MasterUsername: admin
+      MasterUserPassword: admin123
+      VPCSecurityGroups:
+        - !GetAtt DBSecurityGroup.GroupId
+      PubliclyAccessible: true
+      MultiAZ: false
 
-  # Referencias a los secretos existentes en Secrets Manager
+  # Creación de secretos en Secrets Manager
   DBConnectionSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !ImportValue arn:aws:secretsmanager:us-east-2:905418424810:secret:dudu/db/connection-fe6gYa
+      Name: dudu/db/connection2
+      Description: "Connection details for dududb2"
 
   OpenAISecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !ImportValue arn:aws:secretsmanager:us-east-2:905418424810:secret:secret/openai/key-D70NES
+      Name: secret/openai/key2
+      Description: "OpenAI API key"
 
   UserPoolClientSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !ImportValue arn:aws:secretsmanager:us-east-2:905418424810:secret:users_pool/client_secret-EzgOwP
+      Name: users_pool/client_secret2
+      Description: "Client secret for user pool"
 
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow access to RDS"
+      VpcId: !Ref VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: dudu-bucket2
+      VersioningConfiguration:
+        Status: Enabled
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -60,12 +89,7 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                  - secretsmanager:GetSecretValue
-                Resource:
-                  - arn:aws:logs:*:*:*
-                  - !Ref DBConnectionSecret
-                  - !Ref OpenAISecret
-                  - !Ref UserPoolClientSecret
+                Resource: arn:aws:logs:*:*:*
 
   MissionExpirationFunction:
     Type: AWS::Serverless::Function
