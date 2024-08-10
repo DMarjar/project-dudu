@@ -17,6 +17,31 @@ Globals:
 
 
 Resources:
+  ExistingRDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: dududb
+
+  ExistingDBConnectionSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: dudu/db/connection
+      Description: Secret for DB connection
+      ARN: arn:aws:secretsmanager:us-east-2:905418424810:secret:dudu/db/connection-fe6gYa
+
+  ExistingOpenAISecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: secret/openai/key
+      Description: Secret for OpenAI API key
+      ARN: arn:aws:secretsmanager:us-east-2:905418424810:secret:secret/openai/key-D70NES
+
+  ExistingUserPoolClientSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: users_pool/client_secret
+      Description: Client secret for user pool
+      ARN: arn:aws:secretsmanager:us-east-2:905418424810:secret:users_pool/client_secret-EzgOwP
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -38,7 +63,12 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - arn:aws:logs:*:*:*
+                  - arn:aws:secretsmanager:us-east-2:905418424810:secret:dudu/db/connection-fe6gYa
+                  - arn:aws:secretsmanager:us-east-2:905418424810:secret:secret/openai/key-D70NES
+                  - arn:aws:secretsmanager:us-east-2:905418424810:secret:users_pool/client_secret-EzgOwP
 
   GetAllMissionsFunction:
     Type: AWS::Serverless::Function
