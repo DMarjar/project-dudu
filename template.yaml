@@ -21,7 +21,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "Allow access to RDS"
-      VpcId: vpc-03f04f7574b7b9964  # Tu VPC ID
+      VpcId: vpc-03f04f7574b7b9964
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
@@ -41,17 +41,6 @@ Resources:
         - !GetAtt DBSecurityGroup.GroupId
       PubliclyAccessible: true
       MultiAZ: false
-      DBSubnetGroupName:
-        Ref: MyDBSubnetGroup
-
-  MyDBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: "Subnet group for RDS instance"
-      SubnetIds:
-        - subnet-03c289bf6c5e3ff690
-        - subnet-0d49eaaf8c8b98d69
-        - subnet-0a6027ff7a124cead
 
   # Creación de secretos en Secrets Manager
   DBConnectionSecret:
