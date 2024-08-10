@@ -17,7 +17,7 @@ Globals:
 
 
 Resources:
- 
+
   # Creación de secretos en Secrets Manager
   DBConnectionSecret:
     Type: AWS::SecretsManager::Secret
@@ -375,9 +375,7 @@ Outputs:
   LambdaExecutionRoleArn:
     Description: "Implicit IAM Role created for Lambda function"
     Value: !GetAtt LambdaExecutionRole.Arn
-  MyRDSInstanceEndpoint:
-    Description: "Endpoint of the RDS instance"
-    Value: !GetAtt MyRDSInstance.Endpoint.Address
+
   MyRDSInstanceSecret:
     Description: "Secret for the RDS instance"
     Value: !Ref DBConnectionSecret
@@ -387,9 +385,6 @@ Outputs:
   UserPoolClientSecret:
     Description: "Secret for User Pool"
     Value: !Ref UserPoolClientSecret
-  DBSecurityGroup:
-    Description: "Security group for RDS"
-    Value: !GetAtt DBSecurityGroup.GroupId
   S3Bucket:
     Description: "S3 Bucket"
     Value: !Ref S3Bucket
