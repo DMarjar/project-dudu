@@ -387,6 +387,24 @@ Outputs:
   LambdaExecutionRoleArn:
     Description: "Implicit IAM Role created for Lambda function"
     Value: !GetAtt LambdaExecutionRole.Arn
+  MyRDSInstanceEndpoint:
+    Description: "Endpoint of the RDS instance"
+    Value: !GetAtt MyRDSInstance.Endpoint.Address
+  MyRDSInstanceSecret:
+    Description: "Secret for the RDS instance"
+    Value: !Ref DBConnectionSecret
+  OpenAISecret:
+    Description: "Secret for OpenAI"
+    Value: !Ref OpenAISecret
+  UserPoolClientSecret:
+    Description: "Secret for User Pool"
+    Value: !Ref UserPoolClientSecret
+  DBSecurityGroup:
+    Description: "Security group for RDS"
+    Value: !GetAtt DBSecurityGroup.GroupId
+  S3Bucket:
+    Description: "S3 Bucket"
+    Value: !Ref S3Bucket
 
   MissionExpirationApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Mission Expiration function"
@@ -436,6 +454,7 @@ Outputs:
   RegisterAlexaUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Register Alexa User function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_alexa_user/"
+
 
 
   MissionExpirationFunctionArn:
