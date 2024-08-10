@@ -55,7 +55,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "Allow access to RDS"
-      VpcId: !Ref VPCId
+      VpcId: vpc-03f04f7574b7b9964
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
