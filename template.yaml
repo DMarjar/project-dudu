@@ -17,39 +17,7 @@ Globals:
 
 
 Resources:
-  MyDBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: "Subnet group for RDS instance"
-      SubnetIds:
-        - subnet-021d2141d02502ef8
-
-  DBSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "Allow access to RDS"
-      VpcId: vpc-0a45bdb913027910d
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          CidrIp: 0.0.0.0/0
-
-  MyRDSInstance:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      DBName: dududb2
-      AllocatedStorage: 20
-      DBInstanceClass: db.t3.micro
-      Engine: MySQL
-      MasterUsername: admin
-      MasterUserPassword: admin123
-      VPCSecurityGroups:
-        - !GetAtt DBSecurityGroup.GroupId
-      PubliclyAccessible: true
-      MultiAZ: false
-      DBSubnetGroupName: !Ref MyDBSubnetGroup
-
+ 
   # Creación de secretos en Secrets Manager
   DBConnectionSecret:
     Type: AWS::SecretsManager::Secret
