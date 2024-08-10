@@ -5,6 +5,33 @@ Description: >
 
   Sample SAM Template for project-dudu
 
+
+Parameters:
+  RDSInstanceArn:
+    Type: String
+    Description: "ARN of the RDS instance"
+    Default: "arn:aws:rds:us-east-2:905418424810:db:dududb"
+
+  CognitoUserPoolId:
+    Type: String
+    Description: "ID of the Cognito User Pool"
+    Default: "us-east-2_bjlyJabGh"
+
+  ClientSecret:
+    Type: String
+    Description: "ARN of the User Pool Client Secret"
+    Default: "arn:aws:secretsmanager:us-east-2:905418424810:secret:users_pool/client_secret-EzgOwP"
+
+  OpenAIKeySecret:
+    Type: String
+    Description: "ARN of the OpenAI Secret"
+    Default: "arn:aws:secretsmanager:us-east-2:905418424810:secret:secret/openai/key-D70NES"
+
+  DuduDBConnectionSecret:
+    Type: String
+    Description: "ARN of the DuduDB Connection Secret"
+    Default: "arn:aws:secretsmanager:us-east-2:905418424810:secret:dudu/db/connection-fe6gYa"
+
 Globals:
   Function:
     Timeout: 120
@@ -17,6 +44,11 @@ Globals:
 
 
 Resources:
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Ref RDSInstanceArn
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -49,6 +81,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         MissionExpiration:
           Type: Api
@@ -66,6 +102,11 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          OpenAIKeySecret: !Ref OpenAIKeySecret
       Events:
         InsertMission:
           Type: Api
@@ -83,6 +124,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         GetOneMission:
           Type: Api
@@ -100,8 +145,14 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          CognitoUserPoolId: !Ref CognitoUserPoolId
+          ClientSecret: !Ref ClientSecret
       Events:
-        GetOneMission:
+        RecoverPassword:
           Type: Api
           Properties:
             RestApiId: !Ref UsersApi
@@ -117,8 +168,14 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          CognitoUserPoolId: !Ref CognitoUserPoolId
+          ClientSecret: !Ref ClientSecret
       Events:
-        GetOneMission:
+        ChangePassword:
           Type: Api
           Properties:
             RestApiId: !Ref UsersApi
@@ -133,6 +190,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         GetProfile:
           Type: Api
@@ -150,6 +211,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         UpdateProfile:
           Type: Api
@@ -167,6 +232,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         CompleteMission:
           Type: Api
@@ -185,6 +254,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         CancelMission:
           Type: Api
@@ -202,6 +275,10 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         SearchMission:
           Type: Api
@@ -219,6 +296,12 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          CognitoUserPoolId: !Ref CognitoUserPoolId
+          ClientSecret: !Ref ClientSecret
       Events:
         RegisterUser:
           Type: Api
@@ -236,6 +319,12 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          CognitoUserPoolId: !Ref CognitoUserPoolId
+          ClientSecret: !Ref ClientSecret
       Events:
         RegisterUser:
           Type: Api
@@ -253,6 +342,12 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          CognitoUserPoolId: !Ref CognitoUserPoolId
+          ClientSecret: !Ref ClientSecret
       Events:
         SetPassword:
           Type: Api
@@ -270,6 +365,12 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          CognitoUserPoolId: !Ref CognitoUserPoolId
+          ClientSecret: !Ref ClientSecret
       Events:
         CancelMission:
           Type: Api
@@ -287,6 +388,12 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          CognitoUserPoolId: !Ref CognitoUserPoolId
+          ClientSecret: !Ref ClientSecret
       Events:
         ExistUser:
           Type: Api
@@ -304,6 +411,12 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          RDSInstanceArn: !Ref RDSInstance
+          DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
+          CognitoUserPoolId: !Ref CognitoUserPoolId
+          ClientSecret: !Ref ClientSecret
       Events:
         RegisterAlexaUser:
           Type: Api
@@ -435,3 +548,19 @@ Outputs:
   RegisterAlexaUserFunctionArn:
     Description: "Register Alexa User Lambda Function ARN"
     Value: !GetAtt RegisterAlexaUserFunction.Arn
+
+  RDSInstanceArn:
+    Description: "RDS Instance ARN"
+    Value: !Ref RDSInstance
+  CognitoUserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref CognitoUserPoolId
+  ClientSecret:
+    Description: "Client Secret"
+    Value: !Ref ClientSecret
+  OpenAIKeySecret:
+    Description: "OpenAI Key Secret"
+    Value: !Ref OpenAIKeySecret
+  DuduDBConnectionSecret:
+    Description: "DuduDB Connection Secret"
+    Value: !Ref DuduDBConnectionSecret
