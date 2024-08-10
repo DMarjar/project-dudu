@@ -61,7 +61,7 @@ def lambda_handler(event, ___):
 
     except Exception as e:
         response = {
-            'statusCode': 500,
+            'statusCode': 401,
             'headers': {
                 'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Origin': '*',
@@ -140,11 +140,6 @@ def verify_user(username, secrets):
 
     email_verified = user['UserAttributes'][1]['Value']
     user_status = user['UserStatus']
-
-    if not email_verified or email_verified is None:
-        raise HttpStatusCodeError(401, "User or password incorrect")
-    if not user_status or user_status is None:
-        raise HttpStatusCodeError(401, "User or password incorrect")
 
     if str.lower(email_verified) != 'true':
         raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")

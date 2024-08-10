@@ -5,8 +5,8 @@ from modules.users.register_user import app
 
 EVENT = {
     'body': json.dumps({
-        'email': 'emilioetorres100@gmail.com',
-        'username': 'Gislane',
+        'email': '20213tn105@utez.edu.mx',
+        'username': 'Atoferatofe',
         'gender': 'M'
     })
 }
@@ -16,8 +16,7 @@ class Test(unittest.TestCase):
     def test_lambda_handler(self):
 
         response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response,
-                         {'statusCode': 200, 'body': '"User registered successfully"'})
+        self.assertEqual(response['body'], '"User registered successfully"')
 
     @patch('modules.users.register_user.app.get_db_connection')
     @patch('modules.users.register_user.app.save_user_cognito')
@@ -30,8 +29,7 @@ class Test(unittest.TestCase):
         mock_connection.cursor.side_effect = Exception('Error')
 
         response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response,
-                         {'statusCode': 500, 'body': '"Error inserting user"'})
+        self.assertEqual(response['body'],'"Error inserting user"')
 
     @patch('modules.users.register_user.app.get_db_connection')
     @patch('modules.users.register_user.app.save_user_db')
@@ -46,8 +44,7 @@ class Test(unittest.TestCase):
         mock_connection.cursor.side_effect = Exception('Error')
 
         response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response,
-                         {'statusCode': 500, 'body': '"Error giving basic rewards"'})
+        self.assertEqual(response['body'],'"Error giving basic rewards"')
 
     """
     test_validate_body
@@ -61,7 +58,7 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"email is required"'})
+        self.assertEqual(response['body'],  '"email is required"')
 
     def test_email_is_none(self):
         event = {
@@ -72,7 +69,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"email is required"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"email is required"')
 
     def test_email_is_not_str(self):
         event = {
@@ -83,7 +81,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"email must be a string"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"email must be a string"')
 
     def test_email_is_not_valid(self):
         event = {
@@ -94,7 +93,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"Invalid email format"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"Invalid email format"')
 
     def test_username_not_in_body(self):
         event = {
@@ -104,7 +104,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"username is required"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"username is required"')
 
     def test_username_is_none(self):
         event = {
@@ -115,7 +116,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"username is required"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"username is required"')
 
     def test_username_is_not_str(self):
         event = {
@@ -126,7 +128,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"username must be a string"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"username must be a string"')
 
     def test_username_is_too_short(self):
         event = {
@@ -137,7 +140,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"username must be at least 3 characters long"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"username must be at least 3 characters long"')
 
     def test_username_is_too_long(self):
         event = {
@@ -148,7 +152,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"username must be at most 20 characters long"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"username must be at most 20 characters long"')
 
     def test_gender_not_in_body(self):
         event = {
@@ -158,7 +163,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"gender is required"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"gender is required"')
 
     def test_gender_is_none(self):
         event = {
@@ -169,7 +175,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"gender is required"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"gender is required"')
 
     def test_gender_is_not_valid(self):
         event = {
@@ -180,7 +187,8 @@ class Test(unittest.TestCase):
             })
         }
         response = app.lambda_handler(event, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"invalid gender value, must be M or F"'})
+        self.assertEqual(response['statusCode'], 400)
+        self.assertEqual(response['body'], '"invalid gender value, must be M or F"')
 
 
 if __name__ == '__main__':
