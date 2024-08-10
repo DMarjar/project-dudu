@@ -41,7 +41,6 @@ Resources:
         - !GetAtt DBSecurityGroup.GroupId
       PubliclyAccessible: true
       MultiAZ: false
-      ServiceToken: !GetAtt MyRDSInstanceFunction.Arn
       DBSubnetGroupName:
         Ref: MyDBSubnetGroup
 
