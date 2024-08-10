@@ -104,7 +104,7 @@ def get_profile(user_id):
     connection = get_db_connection()
     try:
         with connection.cursor(DictCursor) as cursor:
-            sql = """ SELECT u.id_user, u.level, u.current_xp, u.gender,
+            sql = """ SELECT u.id_user, u.level, u.current_xp, u.gender, u.xp_limit,
                        r.id_reward, r.unlock_level, r.wizard_title
                 FROM users u
                 LEFT JOIN rewards r ON u.level >= r.unlock_level
