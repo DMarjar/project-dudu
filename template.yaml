@@ -22,12 +22,7 @@ Resources:
     Properties:
       DBSubnetGroupDescription: "Subnet group for RDS instance"
       SubnetIds:
-        - subnet-0261dd6981a5a0fad
         - subnet-021d2141d02502ef8
-        - subnet-0a69be49f575be9af
-        - subnet-0b1f85b4047076321
-        - subnet-0321c91149b51e986
-        - subnet-03702aae6e3072820
 
   DBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
