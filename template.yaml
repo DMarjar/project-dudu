@@ -7,10 +7,10 @@ Description: >
 
 
 Parameters:
-  RDSInstanceArn:
+  RDSInstanceID:
     Type: String
-    Description: "ARN of the RDS instance"
-    Default: "arn:aws:rds:us-east-2:905418424810:db:dududb"
+    Description: "ID of the RDS instance"
+    Default: "db-P5F7LTZHVXYZ6SBOHXRW32WF4E"
 
   CognitoUserPoolId:
     Type: String
@@ -48,7 +48,7 @@ Resources:
   RDSInstance:
     Type: AWS::RDS::DBInstance
     Properties:
-      DBInstanceIdentifier: !Ref RDSInstanceArn
+      DBInstanceIdentifier: !Ref RDSInstanceID
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -83,7 +83,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         MissionExpiration:
@@ -104,7 +104,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           OpenAIKeySecret: !Ref OpenAIKeySecret
       Events:
@@ -126,7 +126,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         GetOneMission:
@@ -147,7 +147,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           CognitoUserPoolId: !Ref CognitoUserPoolId
           ClientSecret: !Ref ClientSecret
@@ -170,7 +170,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           CognitoUserPoolId: !Ref CognitoUserPoolId
           ClientSecret: !Ref ClientSecret
@@ -181,6 +181,7 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /change_password/
             Method: post
+
   GetProfileFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -192,7 +193,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         GetProfile:
@@ -213,7 +214,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         UpdateProfile:
@@ -234,7 +235,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         CompleteMission:
@@ -256,7 +257,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         CancelMission:
@@ -277,7 +278,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
       Events:
         SearchMission:
@@ -298,7 +299,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           CognitoUserPoolId: !Ref CognitoUserPoolId
           ClientSecret: !Ref ClientSecret
@@ -321,7 +322,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           CognitoUserPoolId: !Ref CognitoUserPoolId
           ClientSecret: !Ref ClientSecret
@@ -344,7 +345,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           CognitoUserPoolId: !Ref CognitoUserPoolId
           ClientSecret: !Ref ClientSecret
@@ -367,7 +368,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           CognitoUserPoolId: !Ref CognitoUserPoolId
           ClientSecret: !Ref ClientSecret
@@ -390,7 +391,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           CognitoUserPoolId: !Ref CognitoUserPoolId
           ClientSecret: !Ref ClientSecret
@@ -413,7 +414,7 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          RDSInstanceArn: !Ref RDSInstance
+          RDSInstanceID: !Ref RDSInstance
           DuduDBConnectionSecret: !Ref DuduDBConnectionSecret
           CognitoUserPoolId: !Ref CognitoUserPoolId
           ClientSecret: !Ref ClientSecret
@@ -549,7 +550,7 @@ Outputs:
     Description: "Register Alexa User Lambda Function ARN"
     Value: !GetAtt RegisterAlexaUserFunction.Arn
 
-  RDSInstanceArn:
+  RDSInstanceID:
     Description: "RDS Instance ARN"
     Value: !Ref RDSInstance
   CognitoUserPoolId:
