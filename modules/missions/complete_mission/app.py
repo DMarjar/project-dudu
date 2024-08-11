@@ -23,7 +23,7 @@ def lambda_handler(event, __):
 
         if id_mission is None or id_user is None:
             return {
-                'statusCode': 402,
+                'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({"message": "Bad request: id of mission and user is required"})
             }
@@ -48,12 +48,28 @@ def lambda_handler(event, __):
 
                     if new_current_xp >= xp_limit:
                         new_level = level + 1
-                        new_current_xp = new_current_xp - xp_limit
-                        new_limit_xp = xp_limit + 10
-                        cursor.execute("UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s",
-                                       (new_level, new_current_xp, new_limit_xp, id_user))
+                        if new_level > 50:
+                            new_level = 50
+                            new_current_xp = xp_limit  # Ensure XP doesn't go above the limit
+                        else:
+                            new_current_xp = new_current_xp - xp_limit
+                            new_limit_xp = xp_limit + 10
+                            cursor.execute("UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s",
+                                           (new_level, new_current_xp, new_limit_xp, id_user))
 
-                        # Retornar los datos del perfil actualizados
+                            # Update user_reward every 5 levels
+                            if new_level % 5 == 0:
+                                new_reward_id = (new_level // 5)
+                                cursor.execute("INSERT INTO user_reward (id_user, id_reward) VALUES (%s, %s) "
+                                               "ON DUPLICATE KEY UPDATE id_reward = %s",
+                                               (id_user, new_reward_id, new_reward_id))
+
+                                cursor.execute("SELECT wizard_title FROM rewards WHERE id_reward = %s", (new_reward_id,))
+                                reward = cursor.fetchone()
+                                reward_title = reward[0] if reward else "Unknown Reward"
+                            else:
+                                reward_title = None
+
                         response = {
                             'statusCode': 200,
                             'headers': headers,
@@ -63,7 +79,10 @@ def lambda_handler(event, __):
                                     "id_user": id_user,
                                     "level": new_level,
                                     "current_xp": new_current_xp,
-                                    "xp_limit": new_limit_xp
+                                    "xp_limit": xp_limit,
+                                    "level_up": True,
+                                    "xp": random_xp,
+                                    "reward_title": reward_title
                                 }
                             })
                         }
@@ -73,7 +92,17 @@ def lambda_handler(event, __):
                         response = {
                             'statusCode': 200,
                             'headers': headers,
-                            'body': json.dumps({"message": f"Mission {id_mission} completed successfully and XP updated"})
+                            'body': json.dumps({
+                                "message": f"Mission {id_mission} completed successfully and XP updated",
+                                "user_profile": {
+                                    "id_user": id_user,
+                                    "level": level,
+                                    "current_xp": new_current_xp,
+                                    "xp_limit": xp_limit,
+                                    "level_up": False,
+                                    "xp": random_xp
+                                }
+                            })
                         }
 
                     connection.commit()
@@ -91,7 +120,7 @@ def lambda_handler(event, __):
 
         else:
             response = {
-                'statusCode': 404,
+                'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({"message": "Invalid mission or user ID"})
             }
