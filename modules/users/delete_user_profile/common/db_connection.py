@@ -23,7 +23,7 @@ def get_db_connection():
 
 
 def get_secrets():
-    secret_name = "dudu/db/connection"
+    secret_name = "dudu/db/connection2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()
