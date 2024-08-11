@@ -67,7 +67,7 @@ def lambda_handler(event, ___):
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
-            'body': json.dumps('User or password incorrect')
+            'body': json.dumps('User or password incorrect, ' + str(e))
 
         }
 
