@@ -13,7 +13,7 @@ def get_secret_hash(username, client_id, client_secret):
 
 
 def get_secret():
-    secret_name = "users_pool/client_secret"
+    secret_name = "users_pool/client_secret2"
     secret = get_secret_value(secret_name)
     return secret
 
