@@ -3,7 +3,7 @@ import json
 from common.common_functions import get_secret, get_secret_hash
 
 
-def lambda_handler(event):
+def lambda_handler(event, context):
     headers = {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
