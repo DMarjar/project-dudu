@@ -4,7 +4,7 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from .httpStatusCodeError import HttpStatusCodeError
 
-DB_HOST = 'dududb.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
+DB_HOST = 'projectdudu-dbinstance-zxd8h1euhjhe.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
 DB_NAME = 'dududb'
 
 
