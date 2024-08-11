@@ -37,7 +37,7 @@ Resources:
       MasterUsername: admin
       MasterUserPassword: admin123
       VPCSecurityGroups:
-        - !GetAtt prueba.GroupId
+        - !GetAtt DBSecurityGroup.GroupId
       PubliclyAccessible: true
       MultiAZ: false
 
