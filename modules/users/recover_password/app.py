@@ -3,7 +3,14 @@ import json
 from common.common_functions import get_secret, get_secret_hash
 
 
-def lambda_handler(event, context):
+def lambda_handler(event):
+
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST'
+    }
+
     client = boto3.client('cognito-idp')
     secret = get_secret()
 
@@ -27,54 +34,34 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 404,
                 'body': json.dumps('User email not found.'),
-                'headers': {
-                    'Access-Control-Allow-Headers': '*',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST'
-                }
+                'headers': headers
             }
 
         if email_verified != 'true':
             return {
                 'statusCode': 400,
                 'body': json.dumps('User email not verified.'),
-                'headers': {
-                    'Access-Control-Allow-Headers': '*',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST'
-                }
+                'headers': headers
             }
 
         if user_status != 'CONFIRMED':
             return {
                 'statusCode': 400,
                 'body': json.dumps("User account hasn't been confirmed."),
-                'headers': {
-                    'Access-Control-Allow-Headers': '*',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST'
-                }
+                'headers': headers
             }
 
     except client.exceptions.UserNotFoundException:
         return {
             'statusCode': 404,
             'body': json.dumps('User not found.'),
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST'
-            }
+            'headers': headers
         }
     except Exception as e:
         return {
             'statusCode': 500,
             'body': json.dumps('An error occurred while checking user existence: ' + str(e)),
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST'
-            }
+            'headers': headers
         }
 
     try:
@@ -86,28 +73,16 @@ def lambda_handler(event, context):
             SecretHash=secret_hash
         )
 
-        response['headers'] = {
-            'Access-Control-Allow-Headers': '*',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'OPTIONS,POST'
-        }
+        response['headers'] = headers
 
         return {
             'statusCode': 200,
             'body': json.dumps(response['CodeDeliveryDetails']),
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST'
-            }
+            'headers': headers
         }
     except Exception as e:
         return {
             'statusCode': 500,
             'body': json.dumps('An error occurred: ' + str(e)),
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST'
-            }
+            'headers': headers
         }
