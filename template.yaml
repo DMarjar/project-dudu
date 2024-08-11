@@ -17,6 +17,29 @@ Globals:
 
 
 Resources:
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow access to RDS
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: dududb2
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: MySQL
+      MasterUsername: admin
+      MasterUserPassword: admin123
+      VPCSecurityGroups:
+        - !GetAtt prueba.GroupId
+      PubliclyAccessible: true
+      MultiAZ: false
 
   # Creación de secretos en Secrets Manager
   DBConnectionSecret:
@@ -44,6 +67,41 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: duduUserPool
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: true
+          Mutable: true
+
+    # Definición del grupo de usuarios en Cognito
+  UserGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: duduUsersGroup
+      UserPoolId: !Ref UserPool
+      Description: "Grupo de usuarios de dudu"
+      Precedence: 1
+
+    # Cliente para el User Pool
+  UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: duduUserPoolClient
+        UserPoolId: !Ref UserPool
+        GenerateSecret: true
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/dudu-log-group
+      RetentionInDays: 14
+
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -64,6 +122,8 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
                 Resource: arn:aws:logs:*:*:*
               - Effect: Allow
                 Action:
@@ -131,7 +191,21 @@ Resources:
                   - cognito-idp:AdminCreateUser
                   - cognito-idp:AdminDeleteUser
                   - cognito-idp:AdminUpdateUserAttributes
+                  - cognito-idp:AdminGetUser
+                  - cognito-idp:AdminInitiateAuth
+                  - cognito-idp:AdminRespondToAuthChallenge
+                  - cognito-idp:AdminSetUserPassword
+                  - cognito-idp:AdminConfirmSignUp
+                  - cognito-idp:AdminDisableUser
+                  - cognito-idp:AdminEnableUser
+                  - cognito-idp:AdminResetUserPassword
+                  - cognito-idp:AdminUpdateAuthEventFeedback
+                  - cognito-idp:AdminUserGlobalSignOut
+                  - cognito-idp:AdminLinkProviderForUser
+                  - cognito-idp:AdminForgetDevice
+                  - cognito-idp:AdminListDevices
                 Resource: arn:aws:cognito-idp:*:*:userpool/*
+
 
   MissionExpirationFunction:
     Type: AWS::Serverless::Function
