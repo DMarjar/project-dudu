@@ -74,10 +74,64 @@ Resources:
                   - ec2:AttachNetworkInterface
                   - ec2:DescribeSubnets
                   - ec2:DescribeSecurityGroups
+                Resource: "*"
+              - Effect: Allow
+                Action:
                   - rds:DescribeDBInstances
                   - rds:CreateDBInstance
                   - rds:DeleteDBInstance
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                  - secretsmanager:ListSecrets
+                  - secretsmanager:PutSecretValue
+                Resource: arn:aws:secretsmanager:*:*:secret:*
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                  - lambda:CreateFunction
+                  - lambda:DeleteFunction
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:GetFunction
+                Resource: arn:aws:lambda:*:*:function:*
+              - Effect: Allow
+                Action:
+                  - apigateway:GET
+                  - apigateway:POST
+                  - apigateway:PUT
+                  - apigateway:DELETE
+                Resource: arn:aws:apigateway:*::/restapis/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:StartInstances
+                  - ec2:StopInstances
+                  - ec2:RebootInstances
+                  - ec2:TerminateInstances
+                Resource: arn:aws:ec2:*:*:instance/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeVpcs
+                  - ec2:CreateVpc
+                  - ec2:DeleteVpc
+                Resource: arn:aws:ec2:*:*:vpc/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeSecurityGroups
+                  - ec2:AuthorizeSecurityGroupIngress
+                  - ec2:RevokeSecurityGroupIngress
+                  - ec2:AuthorizeSecurityGroupEgress
+                  - ec2:RevokeSecurityGroupEgress
+                Resource: arn:aws:ec2:*:*:security-group/*
+              - Effect: Allow
+                Action:
+                  - cognito-idp:ListUsers
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminDeleteUser
+                  - cognito-idp:AdminUpdateUserAttributes
+                Resource: arn:aws:cognito-idp:*:*:userpool/*
 
   MissionExpirationFunction:
     Type: AWS::Serverless::Function
