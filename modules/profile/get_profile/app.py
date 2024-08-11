@@ -129,7 +129,7 @@ GROUP BY u.id_user, u.level, u.current_xp, u.gender, u.username, r.id_reward, r.
 
 
 def get_secret():
-    secret_name = "users_pool/client_secret"
+    secret_name = "users_pool/client_secret2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()

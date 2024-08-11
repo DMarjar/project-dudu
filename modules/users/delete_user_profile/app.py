@@ -66,7 +66,7 @@ def validate_body(body):
 
     return True
 def get_secret():
-    secret_name = "users_pool/client_secret"
+    secret_name = "users_pool/client_secret2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()
