@@ -125,7 +125,7 @@ WHERE u.id_user = %s
 GROUP BY u.id_user, u.level, u.current_xp, u.gender, u.username, r.id_reward, r.unlock_level, r.wizard_title;
             """
             cursor.execute(sql, (user_id,))
-            profile_data = cursor.fetchall()
+            profile_data = cursor.fetchone()
             return profile_data
     finally:
         connection.close()
