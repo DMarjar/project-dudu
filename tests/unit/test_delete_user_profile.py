@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch
 from botocore.exceptions import ClientError, NoCredentialsError
 from modules.users.delete_user_profile import app
+from modules.users.delete_user_profile.app import delete_user_cognito
 from modules.users.delete_user_profile.common.httpStatusCodeError import HttpStatusCodeError
 
 
@@ -44,7 +45,7 @@ class TestDeleteUserProfile(unittest.TestCase):
 
         # Success request body
         body_user_successfully = {
-            'body': json.dumps({'id_user': 'testuser'})
+            'body': json.dumps({'id_user': '123e4567-e89b-12d3-a456-426614174000'})
         }
 
         # Call lambda_handler function
@@ -175,11 +176,12 @@ class TestDeleteUserProfile(unittest.TestCase):
 
         mock_get_db_connection.return_value = MockConnection()
 
-        id_user = 'testuser'
+        id_user = '123e4567-e89b-12d3-a456-426614174000'
 
         # Call the function and verify that it behaves as expected
         result = app.delete_user_profile(id_user)
-        self.assertTrue(result)  # Adjust this if your function returns something specific
+        self.assertTrue(result)
+        self.print_success(id_user, 200)
 
     @patch('modules.users.delete_user_profile.app.get_db_connection')
     def test_delete_user_profile_not_found(self, mock_get_db_connection):
@@ -211,7 +213,7 @@ class TestDeleteUserProfile(unittest.TestCase):
 
         mock_get_db_connection.return_value = MockConnection()
 
-        id_user = 'testuser'
+        id_user = '123e4567-e89b-12d3-a456-426614174000'
 
         with self.assertRaises(HttpStatusCodeError) as context:
             app.delete_user_profile(id_user)
@@ -221,6 +223,72 @@ class TestDeleteUserProfile(unittest.TestCase):
         self.assertIn("User not found", context.exception.message)
         self.print_exception(context)
 
+    @patch('modules.users.delete_user_profile.app.boto3.client')
+    def test_delete_user_cognito_success(self, mock_boto_client):
+        """Test for successful deletion of a user in Cognito."""
+        mock_cognito = mock_boto_client.return_value
+        mock_cognito.admin_delete_user.return_value = {}
+
+        secrets = {'USER_POOL_ID': 'mock_pool_id'}
+        id_user = 'testuser'
+
+        result = delete_user_cognito(id_user, secrets)
+
+        mock_cognito.admin_delete_user.assert_called_once_with(
+            UserPoolId=secrets['USER_POOL_ID'],
+            Username=id_user
+        )
+        self.assertTrue(result)
+
+    @patch('modules.users.delete_user_profile.app.boto3.client')
+    def test_delete_user_cognito_success(self, mock_boto_client):
+        """Test for successful deletion of a user in Cognito."""
+        mock_cognito = mock_boto_client.return_value
+        mock_cognito.admin_delete_user.return_value = {}
+
+        secrets = {'USER_POOL_ID': 'mock_pool_id'}
+        id_user = 'testuser'
+
+        result = delete_user_cognito(id_user, secrets)
+
+        mock_cognito.admin_delete_user.assert_called_once_with(
+            UserPoolId=secrets['USER_POOL_ID'],
+            Username=id_user
+        )
+        self.assertTrue(result)
+
+    @patch('modules.users.delete_user_profile.app.boto3.client')
+    def test_delete_user_cognito_client_error(self, mock_boto_client):
+        """Test for handling ClientError during deletion of a user in Cognito."""
+        mock_cognito = mock_boto_client.return_value
+        mock_cognito.admin_delete_user.side_effect = ClientError(
+            error_response={'Error': {'Code': 'UserNotFoundException', 'Message': 'User not found'}},
+            operation_name='AdminDeleteUser'
+        )
+
+        secrets = {'USER_POOL_ID': 'mock_pool_id'}
+        id_user = 'testuser'
+
+        with self.assertRaises(HttpStatusCodeError) as context:
+            delete_user_cognito(id_user, secrets)
+
+        self.assertEqual(context.exception.status_code, 404)
+        self.assertIn("User not found in Cognito", context.exception.message)
+
+    @patch('modules.users.delete_user_profile.app.boto3.client')
+    def test_delete_user_cognito_no_credentials_error(self, mock_boto_client):
+        """Test for handling NoCredentialsError during deletion of a user in Cognito."""
+        mock_cognito = mock_boto_client.return_value
+        mock_cognito.admin_delete_user.side_effect = NoCredentialsError()
+
+        secrets = {'USER_POOL_ID': 'mock_pool_id'}
+        id_user = 'testuser'
+
+        with self.assertRaises(HttpStatusCodeError) as context:
+            delete_user_cognito(id_user, secrets)
+
+        self.assertEqual(context.exception.status_code, 500)
+        self.assertIn("No credentials found", context.exception.message)
 
 if __name__ == '__main__':
     unittest.main()

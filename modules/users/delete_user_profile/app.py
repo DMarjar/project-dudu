@@ -1,8 +1,9 @@
 import json
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
-from common.db_connection import get_db_connection
-from common.httpStatusCodeError import HttpStatusCodeError
+from modules.users.delete_user_profile.common.db_connection import get_db_connection
+from modules.users.delete_user_profile.common.httpStatusCodeError import HttpStatusCodeError
+
 
 def lambda_handler(event, context):
     """ This function deletes a user profile and related data from the database and AWS Cognito.
@@ -45,6 +46,7 @@ def lambda_handler(event, context):
 
     return response
 
+
 # Validate payload
 def validate_body(body):
     """ This function validates the payload """
@@ -56,6 +58,7 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "Id_user must be a non-empty string")
 
     return True
+
 
 def get_secret():
     secret_name = "users_pool/client_secret2"
@@ -79,26 +82,32 @@ def get_secret():
     secret = get_secret_value_response['SecretString']
     return json.loads(secret)
 
-def delete_user_cognito(id_user, secrets):
-    client = boto3.client('cognito-idp', region_name='us-east-2')
-    user_pool_id = secrets['USER_POOL_ID']
 
+def delete_user_cognito(id_user, secrets):
+    if not id_user or not isinstance(id_user, str):
+        raise HttpStatusCodeError(400, "Id_user must be a non-empty string")
+
+    client = boto3.client('cognito-idp')
     try:
         client.admin_delete_user(
-            UserPoolId=user_pool_id,
+            UserPoolId=secrets['USER_POOL_ID'],
             Username=id_user
         )
+        return True
     except ClientError as e:
         if e.response['Error']['Code'] == 'UserNotFoundException':
             raise HttpStatusCodeError(404, "User not found in Cognito")
         else:
-            raise HttpStatusCodeError(500, f"Error deleting user from Cognito -> {str(e)}")
+            raise HttpStatusCodeError(500, "Error deleting user from Cognito")
+    except NoCredentialsError:
+        raise HttpStatusCodeError(500, "No credentials found")
 
-# Delete user profile by id_user
+
+# Delete user profile by UUID (sub)
 def delete_user_profile(id_user):
     """ This function deletes a user profile and related data from the database by id_user
 
-    id_user (str): The id_user of the user to be deleted
+    id_user (str): The UUID (sub) of the user to be deleted
 
     Returns:
         bool: True if user profile deletion is successful
@@ -108,7 +117,7 @@ def delete_user_profile(id_user):
 
     try:
         with connection.cursor() as cursor:
-            sql = "DELETE FROM users WHERE id_user = %s"
+            sql = "DELETE FROM users WHERE uuid = %s"
             cursor.execute(sql, (id_user,))
             if cursor.rowcount == 0:
                 raise HttpStatusCodeError(404, "User not found in the database")
