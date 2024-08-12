@@ -72,7 +72,9 @@ def lambda_handler(event, __):
         response = {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps(profile)
+            'body': json.dumps({
+                'profile': profile
+            })
         }
 
     except Exception as e:
