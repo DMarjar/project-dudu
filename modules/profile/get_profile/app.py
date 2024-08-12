@@ -72,7 +72,9 @@ def lambda_handler(event, __):
         response = {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps(profile)
+            'body': json.dumps({
+                'profile': profile
+            })
         }
 
     except Exception as e:
@@ -109,6 +111,7 @@ def get_profile(user_id):
        u.current_xp, 
        u.gender, 
        u.username,
+       u.xp_limit,
        r.id_reward, 
        r.unlock_level, 
        r.wizard_title,
