@@ -9,6 +9,13 @@ from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
+
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+    }
+
     try:
         body = json.loads(event['body'])
         validate_body(body)
@@ -35,11 +42,7 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
+            'headers': headers,
             'body': json.dumps({
                 'id_token': tokens['AuthenticationResult']['IdToken'],
                 'access_token': tokens['AuthenticationResult']['AccessToken'],
@@ -51,22 +54,14 @@ def lambda_handler(event, ___):
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
+            'headers': headers,
             'body': json.dumps(e.message)
         }
 
     except Exception as e:
         response = {
             'statusCode': 401,
-            'headers': {
-                'Access-Control-Allow-Headers': '*',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
+            'headers': headers,
             'body': json.dumps('User or password incorrect')
 
         }
@@ -106,7 +101,7 @@ def validate_body(body):
 
 
 def get_secret():
-    secret_name = "users_pool/client_secret"
+    secret_name = "users_pool/client_secret2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()

@@ -17,6 +17,90 @@ Globals:
 
 
 Resources:
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow access to RDS
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: dududb2
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: MySQL
+      MasterUsername: admin
+      MasterUserPassword: admin123
+      VPCSecurityGroups:
+        - !GetAtt DBSecurityGroup.GroupId
+      PubliclyAccessible: true
+      MultiAZ: false
+
+  # Creación de secretos en Secrets Manager
+  DBConnectionSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: dudu/db/connection2
+      Description: "Connection details for dududb2"
+
+  OpenAISecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: secret/openai/key2
+      Description: "OpenAI API key"
+
+  UserPoolClientSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: users_pool/client_secret2
+      Description: "Client secret for user pool"
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: dudu-bucket2
+      VersioningConfiguration:
+        Status: Enabled
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: duduUserPool
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: true
+          Mutable: true
+
+    # Definición del grupo de usuarios en Cognito
+  UserGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: duduUsersGroup
+      UserPoolId: !Ref UserPool
+      Description: "Grupo de usuarios de dudu"
+      Precedence: 1
+
+    # Cliente para el User Pool
+  UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: duduUserPoolClient
+        UserPoolId: !Ref UserPool
+        GenerateSecret: true
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/dudu-log-group
+      RetentionInDays: 14
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -38,7 +122,90 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
                 Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeInstances
+                  - ec2:AttachNetworkInterface
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeSecurityGroups
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - rds:DescribeDBInstances
+                  - rds:CreateDBInstance
+                  - rds:DeleteDBInstance
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                  - secretsmanager:ListSecrets
+                  - secretsmanager:PutSecretValue
+                Resource: arn:aws:secretsmanager:*:*:secret:*
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                  - lambda:CreateFunction
+                  - lambda:DeleteFunction
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:GetFunction
+                Resource: arn:aws:lambda:*:*:function:*
+              - Effect: Allow
+                Action:
+                  - apigateway:GET
+                  - apigateway:POST
+                  - apigateway:PUT
+                  - apigateway:DELETE
+                Resource: arn:aws:apigateway:*::/restapis/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:StartInstances
+                  - ec2:StopInstances
+                  - ec2:RebootInstances
+                  - ec2:TerminateInstances
+                Resource: arn:aws:ec2:*:*:instance/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeVpcs
+                  - ec2:CreateVpc
+                  - ec2:DeleteVpc
+                Resource: arn:aws:ec2:*:*:vpc/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeSecurityGroups
+                  - ec2:AuthorizeSecurityGroupIngress
+                  - ec2:RevokeSecurityGroupIngress
+                  - ec2:AuthorizeSecurityGroupEgress
+                  - ec2:RevokeSecurityGroupEgress
+                Resource: arn:aws:ec2:*:*:security-group/*
+              - Effect: Allow
+                Action:
+                  - cognito-idp:ListUsers
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminDeleteUser
+                  - cognito-idp:AdminUpdateUserAttributes
+                  - cognito-idp:AdminGetUser
+                  - cognito-idp:AdminInitiateAuth
+                  - cognito-idp:AdminRespondToAuthChallenge
+                  - cognito-idp:AdminSetUserPassword
+                  - cognito-idp:AdminConfirmSignUp
+                  - cognito-idp:AdminDisableUser
+                  - cognito-idp:AdminEnableUser
+                  - cognito-idp:AdminResetUserPassword
+                  - cognito-idp:AdminUpdateAuthEventFeedback
+                  - cognito-idp:AdminUserGlobalSignOut
+                  - cognito-idp:AdminLinkProviderForUser
+                  - cognito-idp:AdminForgetDevice
+                  - cognito-idp:AdminListDevices
+                Resource: arn:aws:cognito-idp:*:*:userpool/*
+
 
   MissionExpirationFunction:
     Type: AWS::Serverless::Function
@@ -337,6 +504,19 @@ Outputs:
     Description: "Implicit IAM Role created for Lambda function"
     Value: !GetAtt LambdaExecutionRole.Arn
 
+  MyRDSInstanceSecret:
+    Description: "Secret for the RDS instance"
+    Value: !Ref DBConnectionSecret
+  OpenAISecret:
+    Description: "Secret for OpenAI"
+    Value: !Ref OpenAISecret
+  UserPoolClientSecret:
+    Description: "Secret for User Pool"
+    Value: !Ref UserPoolClientSecret
+  S3Bucket:
+    Description: "S3 Bucket"
+    Value: !Ref S3Bucket
+
   MissionExpirationApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Mission Expiration function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mission_expiration/"
@@ -385,6 +565,7 @@ Outputs:
   RegisterAlexaUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Register Alexa User function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_alexa_user/"
+
 
 
   MissionExpirationFunctionArn:

@@ -3,7 +3,7 @@ import pymysql
 import boto3
 from botocore.exceptions import ClientError
 
-DB_HOST = 'dududb.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
+DB_HOST = 'projectdudu-dbinstance-zxd8h1euhjhe.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
 DB_NAME = 'dududb'
 
 
@@ -23,7 +23,7 @@ def get_db_connection():
 
 
 def get_secrets():
-    secret_name = "dudu/db/connection"
+    secret_name = "dudu/db/connection2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()

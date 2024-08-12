@@ -72,7 +72,9 @@ def lambda_handler(event, __):
         response = {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps(profile)
+            'body': json.dumps({
+                'profile': profile
+            })
         }
 
     except Exception as e:
@@ -104,21 +106,33 @@ def get_profile(user_id):
     connection = get_db_connection()
     try:
         with connection.cursor(DictCursor) as cursor:
-            sql = """ SELECT u.id_user, u.level, u.current_xp, u.gender,
-                       r.id_reward, r.unlock_level, r.wizard_title
-                FROM users u
-                LEFT JOIN rewards r ON u.level >= r.unlock_level
-                WHERE u.id_user = %s
+            sql = """ SELECT u.id_user, 
+       u.level, 
+       u.current_xp, 
+       u.gender, 
+       u.username,
+       u.xp_limit,
+       r.id_reward, 
+       r.unlock_level, 
+       r.wizard_title,
+       COUNT(CASE WHEN m.status = 'completed' THEN 1 END) AS completed_missions,
+       COUNT(CASE WHEN m.status = 'failed' THEN 1 END) AS failed_missions,
+       COUNT(CASE WHEN m.status = 'canceled' THEN 1 END) AS canceled_missions
+FROM dududb.users u
+LEFT JOIN dududb.rewards r ON u.level >= r.unlock_level
+LEFT JOIN dududb.missions m ON u.id_user = m.id_user
+WHERE u.id_user = %s
+GROUP BY u.id_user, u.level, u.current_xp, u.gender, u.username, r.id_reward, r.unlock_level, r.wizard_title;
             """
             cursor.execute(sql, (user_id,))
-            profile_data = cursor.fetchall()
+            profile_data = cursor.fetchone()
             return profile_data
     finally:
         connection.close()
 
 
 def get_secret():
-    secret_name = "users_pool/client_secret"
+    secret_name = "users_pool/client_secret2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()
