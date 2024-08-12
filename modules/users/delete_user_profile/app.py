@@ -1,9 +1,8 @@
 import json
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
-from modules.users.delete_user_profile.common.db_connection import get_db_connection
-from modules.users.delete_user_profile.common.httpStatusCodeError import HttpStatusCodeError
-
+from common.db_connection import get_db_connection
+from common.httpStatusCodeError import HttpStatusCodeError
 
 def lambda_handler(event, context):
     """ This function deletes a user profile and related data from the database and AWS Cognito.
