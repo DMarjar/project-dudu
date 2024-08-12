@@ -111,6 +111,7 @@ def get_profile(user_id):
        u.current_xp, 
        u.gender, 
        u.username,
+       u.xp_limit,
        r.id_reward, 
        r.unlock_level, 
        r.wizard_title,
