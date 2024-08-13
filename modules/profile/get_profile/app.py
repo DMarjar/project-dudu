@@ -13,53 +13,46 @@ def lambda_handler(event, __):
         'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
     }
     try:
+        if 'body' not in event:
+            return {
+                'statusCode': 500,
+                'headers': headers,
+                'body': json.dumps({"message": "Bad request: Body is required"})
+            }
+
         body = json.loads(event['body'])
-        profile_id = body['id_user']
+        profile_id = body.get('id_user')
 
         if profile_id is None:
-            response = {
-                'statusCode': 402,
+            return {
+                'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({"message": "Bad request: ID is required"})
             }
-            return response
 
         if not isinstance(profile_id, str):
-            response = {
-                'statusCode': 402,
+            return {
+                'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({"message": "Bad request: ID must be a string"})
             }
-            return response
-
-        if profile_id is None:
-            response = {
-                'statusCode': 402,
-                'headers': headers,
-                'body': json.dumps({"message": "Bad request: ID is required"})
-            }
-            return response
 
         if not profile_id.strip():
-            response = {
-                'statusCode': 402,
+            return {
+                'statusCode': 400,  # Adjusted to 400 for bad request
                 'headers': headers,
                 'body': json.dumps({"message": "Bad request: ID cannot be empty"})
             }
-            return response
 
-        # Validate if the user exists in the database
         user_found = validate_user(profile_id)
 
         if user_found['user_count'] == 0:
-            response = {
+            return {
                 'statusCode': 404,
                 'headers': headers,
                 'body': json.dumps({"message": "User not found"})
             }
-            return response
 
-        # Obtener datos de la base de datos
         profile = get_profile(profile_id)
 
         if not profile:
@@ -69,7 +62,7 @@ def lambda_handler(event, __):
                 'body': json.dumps({"message": "No profile information found"})
             }
 
-        response = {
+        return {
             'statusCode': 200,
             'headers': headers,
             'body': json.dumps({
@@ -78,7 +71,7 @@ def lambda_handler(event, __):
         }
 
     except Exception as e:
-        response = {
+        return {
             'statusCode': 500,
             'headers': headers,
             'body': json.dumps({"message": f"An error occurred: {str(e)}"})

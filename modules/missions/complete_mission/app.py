@@ -10,6 +10,14 @@ def lambda_handler(event, __):
         'Access-Control-Allow-Headers': 'Content-Type',
     }
     try:
+        # Verificar si el cuerpo está ausente
+        if 'body' not in event or event['body'] is None:
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({"message": "Bad request: Body is required"})
+            }
+
         body = json.loads(event['body'])
         if not body:
             return {
@@ -75,15 +83,13 @@ def lambda_handler(event, __):
                             'headers': headers,
                             'body': json.dumps({
                                 "message": f"Mission {id_mission} completed successfully and XP updated. Level Up!",
-                                "user_profile": {
-                                    "id_user": id_user,
-                                    "level": new_level,
-                                    "current_xp": new_current_xp,
-                                    "xp_limit": xp_limit,
-                                    "level_up": True,
-                                    "xp": random_xp,
-                                    "reward_title": reward_title
-                                }
+                                "id_user": id_user,
+                                "level": new_level,
+                                "current_xp": new_current_xp,
+                                "xp_limit": xp_limit,
+                                "level_up": True,
+                                "xp": random_xp,
+                                "reward_title": reward_title
                             })
                         }
 
@@ -94,14 +100,13 @@ def lambda_handler(event, __):
                             'headers': headers,
                             'body': json.dumps({
                                 "message": f"Mission {id_mission} completed successfully and XP updated",
-                                "user_profile": {
-                                    "id_user": id_user,
-                                    "level": level,
-                                    "current_xp": new_current_xp,
-                                    "xp_limit": xp_limit,
-                                    "level_up": False,
-                                    "xp": random_xp
-                                }
+                                "id_user": id_user,
+                                "level": level,
+                                "current_xp": new_current_xp,
+                                "xp_limit": xp_limit,
+                                "level_up": False,
+                                "xp": random_xp
+
                             })
                         }
 
