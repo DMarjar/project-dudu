@@ -68,7 +68,7 @@ def lambda_handler(event, __):
                             # Update user_reward every 5 levels
                             if new_level % 5 == 0:
                                 new_reward_id = (new_level // 5)
-                                cursor.execute("INSERT INTO user_reward (id_user, id_reward) VALUES (%s, %s) "
+                                cursor.execute("INSERT INTO user_rewards (id_user, id_reward) VALUES (%s, %s) "
                                                "ON DUPLICATE KEY UPDATE id_reward = %s",
                                                (id_user, new_reward_id, new_reward_id))
 
