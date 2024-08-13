@@ -5,6 +5,18 @@ from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
+    """
+    This function registers a user in the database and gives basic rewards
+
+    body (dict): The body parameter is a dictionary that contains the following attributes:
+        - id_user (int): The user id
+        - username (str): The username
+
+    Returns:
+        dict: A dictionary that contains the status code and a message
+
+    exist_user is only to alexa skill
+    """
     try:
         body = json.loads(event['body'])
 

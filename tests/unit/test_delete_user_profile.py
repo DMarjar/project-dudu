@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import patch
 from botocore.exceptions import ClientError, NoCredentialsError
 from modules.users.delete_user_profile import app
-from modules.users.delete_user_profile.app import delete_user_cognito
+from modules.users.delete_user_profile.app import delete_user_cognito, get_username_cognito
 from modules.users.delete_user_profile.common.httpStatusCodeError import HttpStatusCodeError
 
 
@@ -30,11 +30,13 @@ class TestDeleteUserProfile(unittest.TestCase):
         """Prints a success message indicating that the user was successfully deleted."""
         print(f"User with ID {id_user} deleted successfully with status code {status_code}")
 
+    @patch('modules.users.delete_user_profile.app.get_username_cognito')
     @patch('modules.users.delete_user_profile.app.delete_user_profile')
     @patch('modules.users.delete_user_profile.app.validate_body')
     @patch('modules.users.delete_user_profile.app.delete_user_cognito')
     @patch('modules.users.delete_user_profile.app.get_secret')
-    def test_lambda_handler(self, mock_get_secret, mock_delete_user_cognito, mock_validate_body, mock_delete_user_profile):
+    def test_lambda_handler(self, mock_get_secret, mock_delete_user_cognito, mock_validate_body,
+                            mock_delete_user_profile, mock_get_username_cognito):
         """Tests the lambda_handler function to ensure it correctly processes a successful case."""
 
         # Setup mocks
@@ -42,6 +44,7 @@ class TestDeleteUserProfile(unittest.TestCase):
         mock_validate_body.return_value = True
         mock_delete_user_cognito.return_value = True
         mock_delete_user_profile.return_value = True
+        mock_get_username_cognito.return_value = 'mock_username'
 
         # Success request body
         body_user_successfully = {
@@ -52,13 +55,19 @@ class TestDeleteUserProfile(unittest.TestCase):
         response = app.lambda_handler(body_user_successfully, None)
         expected_response = {
             'statusCode': 200,
-            'body': json.dumps(f'User with id {json.loads(body_user_successfully["body"])["id_user"]} deleted successfully')
+            'body': json.dumps(
+                f'User with id {json.loads(body_user_successfully["body"])["id_user"]} deleted successfully')
         }
 
         # Assertions
         self.assertEqual(response, expected_response)
+
+        # Optional: Print response for debugging
         self.print_response(response)
         print("Request body:", body_user_successfully['body'])
+
+    def print_response(self, response):
+        print("Lambda Response:", response)
 
     def test_id_user_is_missing(self):
         """Tests the lambda_handler function when the id_user is missing in the request body."""
@@ -289,6 +298,52 @@ class TestDeleteUserProfile(unittest.TestCase):
 
         self.assertEqual(context.exception.status_code, 500)
         self.assertIn("No credentials found", context.exception.message)
+
+    @patch('modules.users.delete_user_profile.app.boto3.client')
+    def test_get_username_cognito_success(self, mock_boto_client):
+        """Tests get_username_cognito for a successful username retrieval."""
+
+        # Setup the mock client and its return value
+        mock_client = mock_boto_client.return_value
+        mock_client.list_users.return_value = {
+            'Users': [{'Username': 'mock_username'}]
+        }
+
+        # Test inputs
+        id_user = '123e4567-e89b-12d3-a456-426614174000'
+        secrets = {'USER_POOL_ID': 'mock_pool_id'}
+
+        # Call function
+        username = get_username_cognito(id_user, secrets)
+
+        # Assertions
+        self.assertEqual(username, 'mock_username')
+        mock_client.list_users.assert_called_once_with(
+            UserPoolId='mock_pool_id',
+            Filter=f'sub = "{id_user}"'
+        )
+
+    @patch('modules.users.delete_user_profile.app.boto3.client')
+    def test_get_username_cognito_client_error(self, mock_boto_client):
+        """Tests get_username_cognito when a ClientError is raised by Cognito."""
+
+        # Setup the mock client and simulate a ClientError
+        mock_client = mock_boto_client.return_value
+        mock_client.list_users.side_effect = ClientError(
+            error_response={'Error': {'Code': 'InternalError', 'Message': 'Some error occurred'}},
+            operation_name='ListUsers'
+        )
+
+        # Test inputs
+        id_user = '123e4567-e89b-12d3-a456-426614174000'
+        secrets = {'USER_POOL_ID': 'mock_pool_id'}
+
+        # Call function and assert exception
+        with self.assertRaises(HttpStatusCodeError) as context:
+            get_username_cognito(id_user, secrets)
+
+        self.assertIn("Error retrieving username from Cognito", str(context.exception))
+        self.assertEqual(context.exception.status_code, 500)
 
 if __name__ == '__main__':
     unittest.main()
