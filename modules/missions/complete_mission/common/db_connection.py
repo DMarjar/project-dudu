@@ -2,7 +2,7 @@ import json
 import pymysql
 import boto3
 from botocore.exceptions import NoCredentialsError
-from common.httpStatusCodeError import HttpStatusCodeError
+from modules.missions.complete_mission.common.httpStatusCodeError import HttpStatusCodeError
 
 DB_HOST = 'projectdudu-dbinstance-zxd8h1euhjhe.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
 DB_NAME = 'dududb'

@@ -3,25 +3,17 @@ import re
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from common.httpStatusCodeError import HttpStatusCodeError
-from common.db_connection import get_db_connection
+from modules.profile.update_profile.common.httpStatusCodeError import HttpStatusCodeError
+from modules.profile.update_profile.common.db_connection import get_db_connection
 
 
-def lambda_handler(event, ___):
+def lambda_handler(event, context):
     try:
         body = json.loads(event['body'])
-
         validate_body(body)
-
-        # Get secrets to update the user on AWS Cognito
         secrets = get_secret()
-
-        # Update user on AWS Cognito
         update_cognito_user(body, secrets)
-
-        # Update user gender in DB
         update_user_db(body['username'], body['gender'])
-
         response = {
             'statusCode': 200,
             'body': json.dumps("User updated successfully")
@@ -30,16 +22,19 @@ def lambda_handler(event, ___):
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps({"message": str(e)})
+            'body': json.dumps({"message": str(e)})  # Asegúrate de que el mensaje está en formato JSON
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps(f"An error occurred: {str(e)}")
+            'body': json.dumps({"message": f"An error occurred: {str(e)}"})  # Asegúrate de que el mensaje está en formato JSON
         }
 
     return response
+
+
+
 
 
 def validate_body(body):
@@ -140,7 +135,7 @@ def update_user_db(username, gender):
             cursor.execute(sql, (gender, username))
         connection.commit()
     except Exception as e:
-        raise HttpStatusCodeError(500, "Error updating user in DB")
+        raise HttpStatusCodeError(500, "SQL Error")
     finally:
         connection.close()
 
