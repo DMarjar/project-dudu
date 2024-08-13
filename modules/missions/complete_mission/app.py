@@ -28,7 +28,7 @@ def lambda_handler(event, __):
                 'body': json.dumps({"message": "Bad request: id of mission and user is required"})
             }
 
-        if isinstance(id_mission, int) and isinstance(id_user, int):
+        if isinstance(id_mission, int) and isinstance(id_user, str):
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:

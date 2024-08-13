@@ -5,6 +5,14 @@ from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
+    """
+    This function checks if a user exists only in the database
+
+    body (dict): The body parameter is a dictionary that contains the following attributes:
+        - id_user (int): The user id
+
+    exist_user is only to alexa skill
+    """
     try:
         body = json.loads(event['body'])
 
