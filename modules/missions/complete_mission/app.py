@@ -1,6 +1,6 @@
 import json
 import random
-from common.db_connection import get_db_connection
+from modules.missions.complete_mission.common.db_connection import get_db_connection
 
 
 def lambda_handler(event, __):
@@ -40,7 +40,7 @@ def lambda_handler(event, __):
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:
-                    cursor.execute("SELECT current_xp, xp_limit, level FROM users WHERE id_user = %s FOR UPDATE", (id_user,))
+                    cursor.execute("SELECT current_xp, xp_limit, level FROM users WHERE id_user = %s FOR UPDATE", (id_user, str))
                     user = cursor.fetchone()
                     if not user:
                         raise Exception("User not found")
@@ -65,14 +65,18 @@ def lambda_handler(event, __):
                             cursor.execute("UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s",
                                            (new_level, new_current_xp, new_limit_xp, id_user))
 
-                            # Update user_reward every 5 levels
-                            if new_level % 5 == 0:
-                                new_reward_id = (new_level // 5)
+                            max_reward_id = 12
+                            reward_increment = new_level // 5
+
+                            if reward_increment > 0:
+                                new_reward_id = min(reward_increment, max_reward_id)
+
                                 cursor.execute("INSERT INTO user_rewards (id_user, id_reward) VALUES (%s, %s) "
                                                "ON DUPLICATE KEY UPDATE id_reward = %s",
                                                (id_user, new_reward_id, new_reward_id))
 
-                                cursor.execute("SELECT wizard_title FROM rewards WHERE id_reward = %s", (new_reward_id,))
+                                cursor.execute("SELECT wizard_title FROM rewards WHERE id_reward = %s",
+                                               (new_reward_id,))
                                 reward = cursor.fetchone()
                                 reward_title = reward[0] if reward else "Unknown Reward"
                             else:
