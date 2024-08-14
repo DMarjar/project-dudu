@@ -184,8 +184,8 @@ def update_user_db(id_user, email, username, gender):
         with connection.cursor() as cursor:
             sql = """
             UPDATE users
-                username = %s,
-                gender = %s
+            SET gender = %s
+            username = %s,
             WHERE id_user = %s
             """
             cursor.execute(sql, (email, username, gender, id_user))
