@@ -110,7 +110,7 @@ def delete_cognito_user(sub, secrets):
     try:
         response = client.admin_delete_user(
             UserPoolId=user_pool_id,
-            Username=sub
+            Sub=sub
         )
     except client.exceptions.UserNotFoundException:
         raise HttpStatusCodeError(404, "User not found in Cognito")
