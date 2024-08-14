@@ -2,8 +2,11 @@ import json
 import random
 from common.db_connection import get_db_connection
 
+max_reward_id = 11
+reward_increment = 1
 
 def lambda_handler(event, __):
+
     headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS, GET, PUT, DELETE',
@@ -67,9 +70,8 @@ def lambda_handler(event, __):
                                 "UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s",
                                 (new_level, new_current_xp, new_limit_xp, id_user))
 
-                            max_reward_id = 11
+
                             if  new_level % 5 == 0: 
-                                reward_increment = 1
                                 reward_increment= reward_increment+ 1 
                         
                             if reward_increment > 0:
