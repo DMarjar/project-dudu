@@ -41,7 +41,7 @@ def lambda_handler(event, __):
             try:
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT current_xp, xp_limit, level FROM users WHERE id_user = %s FOR UPDATE",
-                                   (id_user, str))
+                                   (id_user))
                     user = cursor.fetchone()
                     if not user:
                         raise Exception("User not found")
@@ -52,7 +52,7 @@ def lambda_handler(event, __):
                         raise Exception("User's XP is already at the limit")
 
                     random_xp = random.randint(10, 35)
-                    cursor.execute("UPDATE missions SET status = 'completed' WHERE id_mission = %s", (id_mission,))
+                    cursor.execute("UPDATE missions SET status = 'completed' WHERE id_mission = %s", (id_mission))
                     new_current_xp = current_xp + random_xp
 
                     if new_current_xp >= xp_limit:
