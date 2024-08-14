@@ -72,7 +72,7 @@ def lambda_handler(event, __):
                             max_reward_id = 11
                             if new_level % 5 == 0:
                                 cursor.execute("SELECT id_reward FROM user_rewards WHERE id_user = %s", (id_user,))
-                                reward_increment = cursor.fetchone()[0]  # Asegúrate de obtener el valor de la columna
+                                reward_increment = cursor.fetchone()[0]
                                 reward_increment += 1
                         
                             if reward_increment > 0:
@@ -118,6 +118,7 @@ def lambda_handler(event, __):
                                 "xp_limit": xp_limit,
                                 "level_up": False,
                                 "xp": random_xp,
+                                "no entro": True
                             })
                         }
 
