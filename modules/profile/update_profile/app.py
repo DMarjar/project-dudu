@@ -13,11 +13,8 @@ def lambda_handler(event, context):
         validate_body(body)
         secrets = get_secret()
 
-        # Obtener el UUID de Cognito usando el id_user
-        sub = get_cognito_sub_from_id_user(body['id_user'], secrets)
-
         # Actualizar el usuario en Cognito
-        update_cognito_user(body, secrets, sub)
+        update_cognito_user(body['sub'], body, secrets)
 
         # Actualizar el usuario en la base de datos
         update_user_db(body['id_user'], body['gender'])
@@ -59,11 +56,20 @@ def validate_body(body):
     Validate payload
     Args:
         body (dict): Payload
+        - sub (str): User UUID from Cognito
         - id_user (str): User ID for database
         - email (str): User email
         - username (str): User username
         - gender (str): M or F
     """
+    # Validate sub
+    if 'sub' not in body:
+        raise HttpStatusCodeError(400, "sub is required")
+    if body['sub'] is None:
+        raise HttpStatusCodeError(400, "sub is required")
+    if not isinstance(body['sub'], str):
+        raise HttpStatusCodeError(400, "sub must be a string")
+
     # Validate id_user
     if 'id_user' not in body:
         raise HttpStatusCodeError(400, "id_user is required")
@@ -128,28 +134,7 @@ def get_secret():
     return json.loads(secret)
 
 
-def get_cognito_sub_from_id_user(id_user, secrets):
-    client = boto3.client('cognito-idp', region_name='us-east-2')
-    user_pool_id = secrets['USER_POOL_ID']
-
-    # Obtener el UUID (sub) usando id_user desde tu base de datos
-    connection = get_db_connection()
-    try:
-        with connection.cursor() as cursor:
-            sql = "SELECT sub FROM users WHERE id_user = %s"
-            cursor.execute(sql, (id_user,))
-            result = cursor.fetchone()
-            if result:
-                return result['sub']
-            else:
-                raise HttpStatusCodeError(404, "User not found in database")
-    except Exception as e:
-        raise HttpStatusCodeError(500, "Database Error: " + str(e))
-    finally:
-        connection.close()
-
-
-def update_cognito_user(body, secrets, sub):
+def update_cognito_user(sub, body, secrets):
     client = boto3.client('cognito-idp', region_name='us-east-2')
     user_pool_id = secrets['USER_POOL_ID']
 
