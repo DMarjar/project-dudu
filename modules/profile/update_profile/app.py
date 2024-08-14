@@ -77,6 +77,8 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "id_user is required")
     if not isinstance(body['id_user'], str):
         raise HttpStatusCodeError(400, "id_user must be a string")
+    if 'id_user' not in body or not body['id_user']:
+        raise HttpStatusCodeError(400, "id_user is required and must be a non-empty string")
 
     # Validate email
     if 'email' not in body:
