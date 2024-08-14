@@ -134,14 +134,32 @@ def get_secret():
     return json.loads(secret)
 
 
+def get_username_from_sub(sub, user_pool_id):
+    client = boto3.client('cognito-idp', region_name='us-east-2')
+
+    # Obtén la lista de usuarios en el User Pool
+    response = client.list_users(
+        UserPoolId=user_pool_id,
+        Filter=f'sub="{sub}"'
+    )
+
+    if response['Users']:
+        return response['Users'][0]['Username']
+    else:
+        raise Exception("User not found")
+
+
 def update_cognito_user(sub, body, secrets):
     client = boto3.client('cognito-idp', region_name='us-east-2')
     user_pool_id = secrets['USER_POOL_ID']
 
+    # Obtén el nombre de usuario basado en el sub
+    username = get_username_from_sub(sub, user_pool_id)
+
     try:
         response = client.admin_update_user_attributes(
             UserPoolId=user_pool_id,
-            Username=sub,
+            Username=username,
             UserAttributes=[
                 {
                     'Name': 'email',
@@ -155,7 +173,7 @@ def update_cognito_user(sub, body, secrets):
         )
     except client.exceptions.UserNotFoundException:
         raise HttpStatusCodeError(404, "User not found in Cognito")
-    except ClientError as e:
+    except client.exceptions.ClientError as e:
         raise HttpStatusCodeError(500, "Error updating user in Cognito: " + str(e))
 
 
