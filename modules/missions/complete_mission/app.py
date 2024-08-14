@@ -75,9 +75,9 @@ def lambda_handler(event, __):
                                 (new_level, new_current_xp, new_limit_xp, id_user))
 
                             max_reward_id = 11
+                            cursor.execute("SELECT id_reward FROM user_rewards WHERE id_user = %s", (id_user,))
+                            reward_increment = cursor.fetchone()[0]
                             if new_level % 5 == 0:
-                                cursor.execute("SELECT id_reward FROM user_rewards WHERE id_user = %s", (id_user,))
-                                reward_increment = cursor.fetchone()[0]
                                 reward_increment += 1
 
                             if reward_increment > 0:
