@@ -17,7 +17,7 @@ def lambda_handler(event, context):
         update_cognito_user(body['sub'], body, secrets)
 
         # Actualizar el usuario en la base de datos
-        update_user_db(body['id_user'], body['username'], body['gender'])
+        update_user_db(body['id_user'], body['gender'], body['username'], )
 
         response = {
             'statusCode': 200,
@@ -187,7 +187,7 @@ def update_user_db(id_user, gender, username):
     try:
         with connection.cursor() as cursor:
             sql = "UPDATE users SET gender = %s, username = %s WHERE id_user = %s"
-            cursor.execute(sql, (gender, username, id_user))
+            cursor.execute(sql, (id_user, gender, username, ))
         connection.commit()
     except Exception as e:
         raise HttpStatusCodeError(500, "Database SQL Error: " + str(e))
