@@ -17,7 +17,7 @@ def lambda_handler(event, context):
         update_cognito_user(body['sub'], body, secrets)
 
         # Actualizar el usuario en la base de datos
-        update_user_db(body['id_user'], body['gender'])
+        update_user_db(body['id_user'], body['username'], body['gender'])
 
         response = {
             'statusCode': 200,
@@ -69,6 +69,8 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "sub is required")
     if not isinstance(body['sub'], str):
         raise HttpStatusCodeError(400, "sub must be a string")
+    if 'sub' not in body or not body['sub']:
+        raise HttpStatusCodeError(400, "sub is required and must be a non-empty string")
 
     # Validate id_user
     if 'id_user' not in body:
@@ -184,7 +186,7 @@ def update_user_db(id_user, gender):
 
     try:
         with connection.cursor() as cursor:
-            sql = "UPDATE users SET gender = %s WHERE id_user = %s"
+            sql = "UPDATE users SET gender = %s, username = %s WHERE id_user = %s"
             cursor.execute(sql, (gender, id_user))
         connection.commit()
     except Exception as e:
