@@ -67,7 +67,7 @@ def lambda_handler(event, __):
                                 "UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s",
                                 (new_level, new_current_xp, new_limit_xp, id_user))
 
-                            max_reward_id = 12
+                            max_reward_id = 11
                             reward_increment = new_level // 5
 
                             if reward_increment > 0:
@@ -110,7 +110,8 @@ def lambda_handler(event, __):
                                 "current_xp": new_current_xp,
                                 "xp_limit": xp_limit,
                                 "level_up": False,
-                                "xp": random_xp
+                                "xp": random_xp,
+                                "no entro al if": reward_increment
 
                             })
                         }
