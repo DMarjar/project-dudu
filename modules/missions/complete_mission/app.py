@@ -94,7 +94,9 @@ def lambda_handler(event, __):
                                 "xp_limit": xp_limit,
                                 "level_up": True,
                                 "xp": random_xp,
-                                "reward_title": reward_title
+                                "reward_title": reward_title,
+                                "reward_increment": reward_increment,
+                                "new_reward_id": new_reward_id
                             })
                         }
 
@@ -111,8 +113,6 @@ def lambda_handler(event, __):
                                 "xp_limit": xp_limit,
                                 "level_up": False,
                                 "xp": random_xp,
-                                "no entro al if": reward_increment
-
                             })
                         }
 
