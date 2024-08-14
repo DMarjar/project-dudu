@@ -17,7 +17,7 @@ def lambda_handler(event, context):
         update_cognito_user(body['sub'], body, secrets)
 
         # Actualizar el usuario en la base de datos
-        update_user_db(body['id_user'], body['email'], body['username'], body['gender'])
+        update_user_db(body['id_user'], body['username'], body['gender'])
 
         response = {
             'statusCode': 200,
@@ -184,7 +184,6 @@ def update_user_db(id_user, email, username, gender):
         with connection.cursor() as cursor:
             sql = """
             UPDATE users
-            SET email = %s,
                 username = %s,
                 gender = %s
             WHERE id_user = %s
