@@ -183,11 +183,10 @@ def update_cognito_user(sub, body, secrets):
 
 def update_user_db(id_user, gender, username):
     connection = get_db_connection()
-
     try:
         with connection.cursor() as cursor:
             sql = "UPDATE users SET gender = %s, username = %s WHERE id_user = %s"
-            cursor.execute(sql, (id_user, gender, username, ))
+            cursor.execute(sql, (username, gender, id_user))
         connection.commit()
     except Exception as e:
         raise HttpStatusCodeError(500, "Database SQL Error: " + str(e))
