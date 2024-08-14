@@ -2,17 +2,13 @@ import json
 import random
 from common.db_connection import get_db_connection
 
-
-
 def lambda_handler(event, __):
-
     headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS, GET, PUT, DELETE',
         'Access-Control-Allow-Headers': 'Content-Type',
     }
     try:
-        # Verificar si el cuerpo está ausente
         if 'body' not in event or event['body'] is None:
             return {
                 'statusCode': 400,
@@ -42,8 +38,17 @@ def lambda_handler(event, __):
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:
+                    cursor.execute("SELECT status FROM missions WHERE id_mission = %s", (id_mission,))
+                    mission_status = cursor.fetchone()
+                    if mission_status and mission_status[0] == 'completed':
+                        return {
+                            'statusCode': 400,
+                            'headers': headers,
+                            'body': json.dumps({"message": "Mission is already completed"})
+                        }
+
                     cursor.execute("SELECT current_xp, xp_limit, level FROM users WHERE id_user = %s FOR UPDATE",
-                                   (id_user))
+                                   (id_user,))
                     user = cursor.fetchone()
                     if not user:
                         raise Exception("User not found")
@@ -54,7 +59,7 @@ def lambda_handler(event, __):
                         raise Exception("User's XP is already at the limit")
 
                     random_xp = random.randint(10, 35)
-                    cursor.execute("UPDATE missions SET status = 'completed' WHERE id_mission = %s", (id_mission))
+                    cursor.execute("UPDATE missions SET status = 'completed' WHERE id_mission = %s", (id_mission,))
                     new_current_xp = current_xp + random_xp
 
                     if new_current_xp >= xp_limit:
@@ -74,7 +79,7 @@ def lambda_handler(event, __):
                                 cursor.execute("SELECT id_reward FROM user_rewards WHERE id_user = %s", (id_user,))
                                 reward_increment = cursor.fetchone()[0]
                                 reward_increment += 1
-                        
+
                             if reward_increment > 0:
                                 new_reward_id = min(reward_increment, max_reward_id)
 
@@ -117,8 +122,7 @@ def lambda_handler(event, __):
                                 "current_xp": new_current_xp,
                                 "xp_limit": xp_limit,
                                 "level_up": False,
-                                "xp": random_xp,
-                                "no entro": True
+                                "xp": random_xp
                             })
                         }
 
