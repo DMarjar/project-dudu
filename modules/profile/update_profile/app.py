@@ -12,8 +12,16 @@ def lambda_handler(event, context):
         body = json.loads(event['body'])
         validate_body(body)
         secrets = get_secret()
-        update_cognito_user(body, secrets)
-        update_user_db(body['username'], body['gender'])
+
+        # Obtener el UUID de Cognito usando el id_user
+        sub = get_cognito_sub_from_id_user(body['id_user'], secrets)
+
+        # Actualizar el usuario en Cognito
+        update_cognito_user(body, secrets, sub)
+
+        # Actualizar el usuario en la base de datos
+        update_user_db(body['id_user'], body['gender'])
+
         response = {
             'statusCode': 200,
             'body': json.dumps("User updated successfully")
@@ -22,19 +30,28 @@ def lambda_handler(event, context):
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps({"message": str(e)})  # Asegúrate de que el mensaje está en formato JSON
+            'body': json.dumps({"message": str(e)})
+        }
+
+    except ClientError as e:
+        response = {
+            'statusCode': 500,
+            'body': json.dumps({"message": f"AWS Client Error: {str(e)}"})
+        }
+
+    except NoCredentialsError as e:
+        response = {
+            'statusCode': 500,
+            'body': json.dumps({"message": f"Credentials Error: {str(e)}"})
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps({"message": f"An error occurred: {str(e)}"})  # Asegúrate de que el mensaje está en formato JSON
+            'body': json.dumps({"message": f"An unexpected error occurred: {str(e)}"})
         }
 
     return response
-
-
-
 
 
 def validate_body(body):
@@ -42,11 +59,19 @@ def validate_body(body):
     Validate payload
     Args:
         body (dict): Payload
+        - id_user (str): User ID for database
         - email (str): User email
         - username (str): User username
         - gender (str): M or F
-
     """
+    # Validate id_user
+    if 'id_user' not in body:
+        raise HttpStatusCodeError(400, "id_user is required")
+    if body['id_user'] is None:
+        raise HttpStatusCodeError(400, "id_user is required")
+    if not isinstance(body['id_user'], str):
+        raise HttpStatusCodeError(400, "id_user must be a string")
+
     # Validate email
     if 'email' not in body:
         raise HttpStatusCodeError(400, "email is required")
@@ -74,7 +99,7 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "gender is required")
     if body['gender'] is None:
         raise HttpStatusCodeError(400, "gender is required")
-    if not body['gender'] in ['M', 'F']:
+    if body['gender'] not in ['M', 'F']:
         raise HttpStatusCodeError(400, "invalid gender value, must be M or F")
 
     return True
@@ -95,22 +120,43 @@ def get_secret():
             SecretId=secret_name
         )
     except ClientError as e:
-        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+        raise HttpStatusCodeError(500, "Error getting secret from AWS Secrets Manager: " + str(e))
     except NoCredentialsError as e:
-        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+        raise HttpStatusCodeError(500, "AWS Credentials Error: " + str(e))
 
     secret = get_secret_value_response['SecretString']
     return json.loads(secret)
 
 
-def update_cognito_user(body, secrets):
+def get_cognito_sub_from_id_user(id_user, secrets):
+    client = boto3.client('cognito-idp', region_name='us-east-2')
+    user_pool_id = secrets['USER_POOL_ID']
+
+    # Obtener el UUID (sub) usando id_user desde tu base de datos
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT sub FROM users WHERE id_user = %s"
+            cursor.execute(sql, (id_user,))
+            result = cursor.fetchone()
+            if result:
+                return result['sub']
+            else:
+                raise HttpStatusCodeError(404, "User not found in database")
+    except Exception as e:
+        raise HttpStatusCodeError(500, "Database Error: " + str(e))
+    finally:
+        connection.close()
+
+
+def update_cognito_user(body, secrets, sub):
     client = boto3.client('cognito-idp', region_name='us-east-2')
     user_pool_id = secrets['USER_POOL_ID']
 
     try:
         response = client.admin_update_user_attributes(
             UserPoolId=user_pool_id,
-            Username=body['username'],
+            Username=sub,
             UserAttributes=[
                 {
                     'Name': 'email',
@@ -124,18 +170,19 @@ def update_cognito_user(body, secrets):
         )
     except client.exceptions.UserNotFoundException:
         raise HttpStatusCodeError(404, "User not found in Cognito")
+    except ClientError as e:
+        raise HttpStatusCodeError(500, "Error updating user in Cognito: " + str(e))
 
 
-def update_user_db(username, gender):
+def update_user_db(id_user, gender):
     connection = get_db_connection()
 
     try:
         with connection.cursor() as cursor:
-            sql = "UPDATE users SET gender = %s WHERE id = %s"
-            cursor.execute(sql, (gender, username))
+            sql = "UPDATE users SET gender = %s WHERE id_user = %s"
+            cursor.execute(sql, (gender, id_user))
         connection.commit()
     except Exception as e:
-        raise HttpStatusCodeError(500, "SQL Error")
+        raise HttpStatusCodeError(500, "Database SQL Error: " + str(e))
     finally:
         connection.close()
-
