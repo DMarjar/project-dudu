@@ -68,8 +68,10 @@ def lambda_handler(event, __):
                                 (new_level, new_current_xp, new_limit_xp, id_user))
 
                             max_reward_id = 11
-                            reward_increment = new_level // 5
-
+                            if  new_level % 5 == 0: 
+                                reward_increment = 1
+                                reward_increment= reward_increment+ 1 
+                        
                             if reward_increment > 0:
                                 new_reward_id = min(reward_increment, max_reward_id)
 
