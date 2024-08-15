@@ -53,6 +53,7 @@ jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -79,6 +80,7 @@ jobs:
           args: >
             -Dsonar.python.coverage.reportPaths=coverage-reports/coverage-python.xml
             -X
+
 
 
 
