@@ -6,7 +6,7 @@ if [ "$1" == "test" ]; then
   # Para cada carpeta (missions, profile, users)
   for module in missions profile users; do
     # Buscar todos los archivos Python y modificar las importaciones
-    find modules/$module -name "*.py" -exec sed -i "s/from common/from modules.$module/g" {} +
+    find modules/$module -name "*.py" -exec sed -i "s/from common/from modules.$module.common/g" {} +
   done
 
 elif [ "$1" == "deploy" ]; then
