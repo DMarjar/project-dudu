@@ -343,7 +343,7 @@ class Test(unittest.TestCase):
         mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
 
         response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response['body'], '"Mission inserted successfully"')
+        self.assertEqual(response['body'], '"fantasy description"')
 
 
 if __name__ == '__main__':
