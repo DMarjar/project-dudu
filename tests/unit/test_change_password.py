@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import json
 from botocore.exceptions import ClientError
 from modules.users.change_password.app import lambda_handler
@@ -21,28 +21,22 @@ class TestLambdaHandler(unittest.TestCase):
         self.mock_get_secret.return_value = {'SECRET_CLIENT': 'mock_secret_client'}
         self.mock_get_secret_hash.return_value = 'mock_secret_hash'
 
-        self.mock_client_exceptions = MagicMock()
-        self.mock_client.return_value.exceptions = self.mock_client_exceptions
-
         class CodeMismatchException(Exception):
             pass
-
-        self.mock_client_exceptions.CodeMismatchException = CodeMismatchException
 
         class ExpiredCodeException(Exception):
             pass
 
-        self.mock_client_exceptions.ExpiredCodeException = ExpiredCodeException
-
         class InvalidPasswordException(Exception):
             pass
-
-        self.mock_client_exceptions.InvalidPasswordException = InvalidPasswordException
 
         class UserNotFoundException(Exception):
             pass
 
-        self.mock_client_exceptions.UserNotFoundException = UserNotFoundException
+        self.mock_client.return_value.exceptions.CodeMismatchException = CodeMismatchException
+        self.mock_client.return_value.exceptions.ExpiredCodeException = ExpiredCodeException
+        self.mock_client.return_value.exceptions.InvalidPasswordException = InvalidPasswordException
+        self.mock_client.return_value.exceptions.UserNotFoundException = UserNotFoundException
 
     def tearDown(self):
         patch.stopall()
@@ -60,7 +54,8 @@ class TestLambdaHandler(unittest.TestCase):
 
         self.mock_client().confirm_forgot_password.return_value = {}
 
-        response = lambda_handler(event, None)
+
+        response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 200)
         self.assertIn('Password has been reset successfully', response['body'])
@@ -76,7 +71,8 @@ class TestLambdaHandler(unittest.TestCase):
         }
         context = {}
 
-        response = lambda_handler(event, None)
+
+        response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 400)
         self.assertIn('New password and confirmation password do not match', response['body'])
@@ -92,10 +88,11 @@ class TestLambdaHandler(unittest.TestCase):
         }
         context = {}
 
-        self.mock_client().confirm_forgot_password.side_effect = self.mock_client_exceptions.CodeMismatchException(
-            {'Error': {'Code': 'CodeMismatchException'}}, 'confirm_forgot_password')
+        self.mock_client().confirm_forgot_password.side_effect = (
+                self.mock_client.return_value.exceptions.CodeMismatchException(
+                    {'Error': {'Code': 'CodeMismatchException'}}, 'confirm_forgot_password'))
 
-        response = lambda_handler(event, None)
+        response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 400)
         self.assertIn('Invalid confirmation code', response['body'])
@@ -111,10 +108,12 @@ class TestLambdaHandler(unittest.TestCase):
         }
         context = {}
 
-        self.mock_client().confirm_forgot_password.side_effect = self.mock_client_exceptions.ExpiredCodeException(
-            {'Error': {'Code': 'ExpiredCodeException'}}, 'confirm_forgot_password')
+        self.mock_client().confirm_forgot_password.side_effect = (
+            self.mock_client.return_value.exceptions.ExpiredCodeException(
+                {'Error': {'Code': 'ExpiredCodeException'}}, 'confirm_forgot_password'))
 
-        response = lambda_handler(event, None)
+
+        response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 400)
         self.assertIn('Confirmation code has expired', response['body'])
@@ -130,10 +129,12 @@ class TestLambdaHandler(unittest.TestCase):
         }
         context = {}
 
-        self.mock_client().confirm_forgot_password.side_effect = self.mock_client_exceptions.UserNotFoundException(
-            {'Error': {'Code': 'UserNotFoundException'}}, 'confirm_forgot_password')
+        self.mock_client().confirm_forgot_password.side_effect = (
+            self.mock_client.return_value.exceptions.UserNotFoundException(
+                {'Error': {'Code': 'UserNotFoundException'}}, 'confirm_forgot_password'))
 
-        response = lambda_handler(event, None)
+
+        response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 404)
         self.assertIn('User not found', response['body'])
@@ -149,10 +150,12 @@ class TestLambdaHandler(unittest.TestCase):
         }
         context = {}
 
-        self.mock_client().confirm_forgot_password.side_effect = self.mock_client_exceptions.InvalidPasswordException(
-            {'Error': {'Code': 'InvalidPasswordException'}}, 'confirm_forgot_password')
+        self.mock_client().confirm_forgot_password.side_effect = (
+            self.mock_client.return_value.exceptions.InvalidPasswordException(
+                {'Error': {'Code': 'InvalidPasswordException'}}, 'confirm_forgot_password'))
 
-        response = lambda_handler(event, None)
+
+        response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 400)
         self.assertIn('Invalid password:', response['body'])
@@ -177,7 +180,8 @@ class TestLambdaHandler(unittest.TestCase):
 
         self.mock_client().confirm_forgot_password.side_effect = Exception('Some error')
 
-        response = lambda_handler(event, None)
+
+        response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 500)
         self.assertIn('An error occurred while resetting the password: Some error', response['body'])
