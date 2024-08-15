@@ -32,6 +32,9 @@ jobs:
             fi
           done
 
+      - name: Give execution permission to modify_imports.sh
+        run: chmod +x ./modify_imports.sh
+
       - name: Modify imports for testing
         run: ./modify_imports.sh test
 
@@ -111,6 +114,9 @@ jobs:
             fi
           done
 
+      - name: Give execution permission to modify_imports.sh
+        run: chmod +x ./modify_imports.sh
+
       - name: Modify imports for deployment
         run: ./modify_imports.sh deploy
 
@@ -125,7 +131,7 @@ jobs:
 
       - name: Build SAM application
         run: sam build
-        
+
       - name: Deploy SAM application
         run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name projectDUDU --capabilities CAPABILITY_IAM
         env:
