@@ -19,46 +19,63 @@ def lambda_handler(event, context):
 
     try:
         body = json.loads(event['body'])
-
-        # Validate payload
-        validate_body(body)
-
-        # Get secrets to delete the user in AWS Cognito
+        validate_body_for_deletion(body)
         secrets = get_secret()
 
-        # Get the username from AWS Cognito using id_user
-        username = get_username_cognito(body['id_user'], secrets)
+        # Eliminar el usuario en Cognito
+        delete_cognito_user(body['sub'], secrets)
 
-        # Delete user profile from DB
-        delete_user_profile(body['id_user'])
-
-        # Delete user profile from AWS Cognito
-        delete_user_cognito(username, secrets)
+        # Eliminar el usuario en la base de datos
+        delete_user_db(body['id_user'])
 
         response = {
             'statusCode': 200,
-            'body': json.dumps(f'User with id {body["id_user"]} deleted successfully')
+            'body': json.dumps("User deleted successfully")
         }
 
     except HttpStatusCodeError as e:
-        print(e.message)
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps(e.message)
+            'body': json.dumps({"message": str(e)})
+        }
+
+    except ClientError as e:
+        response = {
+            'statusCode': 500,
+            'body': json.dumps({"message": f"AWS Client Error: {str(e)}"})
+        }
+
+    except NoCredentialsError as e:
+        response = {
+            'statusCode': 500,
+            'body': json.dumps({"message": f"Credentials Error: {str(e)}"})
+        }
+
+    except Exception as e:
+        response = {
+            'statusCode': 500,
+            'body': json.dumps({"message": f"An unexpected error occurred: {str(e)}"})
         }
 
     return response
 
 
 # Validate payload
-def validate_body(body):
-    """ This function validates the payload """
+def validate_body_for_deletion(body):
+    """
+    Validate payload for deletion
+    Args:
+        body (dict): Payload
+        - sub (str): User UUID from Cognito
+        - id_user (str): User ID for database
+    """
+    # Validate sub
+    if 'sub' not in body or not isinstance(body['sub'], str) or not body['sub']:
+        raise HttpStatusCodeError(400, "sub is required and must be a non-empty string")
 
     # Validate id_user
-    if 'id_user' not in body:
-        raise HttpStatusCodeError(400, "Id_user is required")
-    if not isinstance(body['id_user'], str) or body['id_user'].strip() == "":
-        raise HttpStatusCodeError(400, "Id_user must be a non-empty string")
+    if 'id_user' not in body or not isinstance(body['id_user'], str) or not body['id_user']:
+        raise HttpStatusCodeError(400, "id_user is required and must be a non-empty string")
 
     return True
 
@@ -78,73 +95,43 @@ def get_secret():
             SecretId=secret_name
         )
     except ClientError as e:
-        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+        raise HttpStatusCodeError(500, "Error getting secret from AWS Secrets Manager: " + str(e))
     except NoCredentialsError as e:
-        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+        raise HttpStatusCodeError(500, "AWS Credentials Error: " + str(e))
 
     secret = get_secret_value_response['SecretString']
     return json.loads(secret)
 
 
-def get_username_cognito(id_user, secrets):
-    client = boto3.client('cognito-idp')
+def delete_cognito_user(sub, secrets):
+    client = boto3.client('cognito-idp', region_name='us-east-2')
+    user_pool_id = secrets['USER_POOL_ID']
+
     try:
-        response = client.list_users(
-            UserPoolId=secrets['USER_POOL_ID'],
-            Filter=f'sub = "{id_user}"'
+        response = client.admin_delete_user(
+            UserPoolId=user_pool_id,
+            Username=sub
         )
-        if not response['Users']:
-            raise HttpStatusCodeError(404, "User not found in Cognito")
-
-        username = response['Users'][0]['Username']
-        return username
-    except ClientError as e:
-        raise HttpStatusCodeError(500, "Error retrieving username from Cognito")
+    except client.exceptions.UserNotFoundException:
+        raise HttpStatusCodeError(404, "User not found in Cognito")
+    except client.exceptions.ClientError as e:
+        raise HttpStatusCodeError(500, "Error deleting user in Cognito: " + str(e))
 
 
-def delete_user_cognito(username, secrets):
-    if not username or not isinstance(username, str):
-        raise HttpStatusCodeError(400, "Username must be a non-empty string")
-
-    client = boto3.client('cognito-idp')
-    try:
-        client.admin_delete_user(
-            UserPoolId=secrets['USER_POOL_ID'],
-            Username=username
-        )
-        return True
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'UserNotFoundException':
-            raise HttpStatusCodeError(404, "User not found in Cognito")
-        else:
-            raise HttpStatusCodeError(500, "Error deleting user from Cognito")
-    except NoCredentialsError:
-        raise HttpStatusCodeError(500, "No credentials found")
-
-
-def delete_user_profile(id_user):
-    """ This function deletes a user profile and related data from the database by id_user
-
-    id_user (str): The UUID (sub) of the user to be deleted
-
-    Returns:
-        bool: True if user profile deletion is successful
-    """
-
+def delete_user_db(id_user):
     connection = get_db_connection()
-
     try:
         with connection.cursor() as cursor:
-            sql = "DELETE FROM users WHERE id_user = %s"
-            cursor.execute(sql, (id_user,))
-            if cursor.rowcount == 0:
-                raise HttpStatusCodeError(404, "User not found in the database")
+            # Primero elimina registros en tablas dependientes
+            delete_user_rewards_sql = "DELETE FROM user_rewards WHERE id_user = %s"
+            cursor.execute(delete_user_rewards_sql, (id_user,))
+
+            # Luego elimina el usuario
+            delete_user_sql = "DELETE FROM users WHERE id_user = %s"
+            cursor.execute(delete_user_sql, (id_user,))
 
         connection.commit()
-
     except Exception as e:
-        raise e
+        raise HttpStatusCodeError(500, "Database SQL Error: " + str(e))
     finally:
         connection.close()
-
-    return True
