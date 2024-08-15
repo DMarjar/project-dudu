@@ -1,7 +1,6 @@
 import unittest
 import json
 from unittest.mock import patch
-from botocore.exceptions import ClientError
 from modules.users.change_password.app import lambda_handler
 
 
@@ -10,15 +9,6 @@ class TestLambdaHandler(unittest.TestCase):
     def setUp(self):
         self.client_patch = patch('boto3.client')
         self.mock_client = self.client_patch.start()
-
-        self.get_secret_patch = patch('modules.users.change_password.common.common_functions.get_secret')
-        self.mock_get_secret = self.get_secret_patch.start()
-
-        self.get_secret_hash_patch = patch('modules.users.change_password.common.common_functions.get_secret_hash')
-        self.mock_get_secret_hash = self.get_secret_hash_patch.start()
-
-        self.mock_get_secret.return_value = {'SECRET_CLIENT': 'mock_secret_client'}
-        self.mock_get_secret_hash.return_value = 'mock_secret_hash'
 
         class CodeMismatchException(Exception):
             pass
@@ -53,7 +43,6 @@ class TestLambdaHandler(unittest.TestCase):
 
         self.mock_client().confirm_forgot_password.return_value = {}
 
-
         response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 200)
@@ -69,7 +58,6 @@ class TestLambdaHandler(unittest.TestCase):
             })
         }
         context = {}
-
 
         response = lambda_handler(event, context)
 
@@ -88,8 +76,8 @@ class TestLambdaHandler(unittest.TestCase):
         context = {}
 
         self.mock_client().confirm_forgot_password.side_effect = (
-                self.mock_client.return_value.exceptions.CodeMismatchException(
-                    {'Error': {'Code': 'CodeMismatchException'}}, 'confirm_forgot_password'))
+            self.mock_client.return_value.exceptions.CodeMismatchException(
+                {'Error': {'Code': 'CodeMismatchException'}}, 'confirm_forgot_password'))
 
         response = lambda_handler(event, context)
 
@@ -111,7 +99,6 @@ class TestLambdaHandler(unittest.TestCase):
             self.mock_client.return_value.exceptions.ExpiredCodeException(
                 {'Error': {'Code': 'ExpiredCodeException'}}, 'confirm_forgot_password'))
 
-
         response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 400)
@@ -131,7 +118,6 @@ class TestLambdaHandler(unittest.TestCase):
         self.mock_client().confirm_forgot_password.side_effect = (
             self.mock_client.return_value.exceptions.UserNotFoundException(
                 {'Error': {'Code': 'UserNotFoundException'}}, 'confirm_forgot_password'))
-
 
         response = lambda_handler(event, context)
 
@@ -153,22 +139,10 @@ class TestLambdaHandler(unittest.TestCase):
             self.mock_client.return_value.exceptions.InvalidPasswordException(
                 {'Error': {'Code': 'InvalidPasswordException'}}, 'confirm_forgot_password'))
 
-
         response = lambda_handler(event, context)
 
         self.assertEqual(response['statusCode'], 400)
         self.assertIn('Invalid password:', response['body'])
-
-    def test_get_secrets_client_error(self):
-        def mock_get_secret():
-            raise ClientError(
-                {'Error': {'Code': 'ResourceNotFoundException'}}, 'get_secret_value'
-            )
-
-        self.mock_get_secret.side_effect = mock_get_secret
-
-        with self.assertRaises(ClientError):
-            self.mock_get_secret()
 
     def test_general_exception(self):
         event = {
@@ -182,7 +156,6 @@ class TestLambdaHandler(unittest.TestCase):
         context = {}
 
         self.mock_client().confirm_forgot_password.side_effect = Exception('Some error')
-
 
         response = lambda_handler(event, context)
 
