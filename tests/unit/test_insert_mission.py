@@ -16,11 +16,6 @@ EVENT = {
 
 class Test(unittest.TestCase):
 
-    def test_lambda_handler(self):
-        response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response['body'], '"Mission inserted successfully"')
-
-
     @patch('modules.missions.insert_mission.app.insert_mission')
     @patch('modules.missions.insert_mission.app.get_openai_client')
     @patch('modules.missions.insert_mission.app.validate_user')
