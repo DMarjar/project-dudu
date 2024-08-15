@@ -122,8 +122,14 @@ def delete_user_db(id_user):
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            sql = "DELETE FROM users WHERE id_user = %s"
-            cursor.execute(sql, (id_user,))
+            # Primero elimina registros en tablas dependientes
+            delete_user_rewards_sql = "DELETE FROM user_rewards WHERE id_user = %s"
+            cursor.execute(delete_user_rewards_sql, (id_user,))
+
+            # Luego elimina el usuario
+            delete_user_sql = "DELETE FROM users WHERE id_user = %s"
+            cursor.execute(delete_user_sql, (id_user,))
+
         connection.commit()
     except Exception as e:
         raise HttpStatusCodeError(500, "Database SQL Error: " + str(e))
