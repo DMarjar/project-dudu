@@ -2,7 +2,6 @@ import json
 import random
 from common.db_connection import get_db_connection
 
-
 def lambda_handler(event, __):
     headers = {
         'Access-Control-Allow-Origin': '*',
@@ -10,7 +9,6 @@ def lambda_handler(event, __):
         'Access-Control-Allow-Headers': 'Content-Type',
     }
     try:
-        # Verificar si el cuerpo está ausente
         if 'body' not in event or event['body'] is None:
             return {
                 'statusCode': 400,
@@ -40,7 +38,17 @@ def lambda_handler(event, __):
             connection = get_db_connection()
             try:
                 with connection.cursor() as cursor:
-                    cursor.execute("SELECT current_xp, xp_limit, level FROM users WHERE id_user = %s FOR UPDATE", (id_user,))
+                    cursor.execute("SELECT status FROM missions WHERE id_mission = %s", (id_mission,))
+                    mission_status = cursor.fetchone()
+                    if mission_status and mission_status[0] == 'completed':
+                        return {
+                            'statusCode': 400,
+                            'headers': headers,
+                            'body': json.dumps({"message": "Mission is already completed"})
+                        }
+
+                    cursor.execute("SELECT current_xp, xp_limit, level FROM users WHERE id_user = %s FOR UPDATE",
+                                   (id_user,))
                     user = cursor.fetchone()
                     if not user:
                         raise Exception("User not found")
@@ -62,17 +70,24 @@ def lambda_handler(event, __):
                         else:
                             new_current_xp = new_current_xp - xp_limit
                             new_limit_xp = xp_limit + 10
-                            cursor.execute("UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s",
-                                           (new_level, new_current_xp, new_limit_xp, id_user))
+                            cursor.execute(
+                                "UPDATE users SET level = %s, current_xp = %s, xp_limit = %s WHERE id_user = %s",
+                                (new_level, new_current_xp, new_limit_xp, id_user))
 
-                            # Update user_reward every 5 levels
+                            max_reward_id = 11
+                            cursor.execute("SELECT id_reward FROM user_rewards WHERE id_user = %s", (id_user,))
+                            reward_increment = cursor.fetchone()[0]
                             if new_level % 5 == 0:
-                                new_reward_id = (new_level // 5)
-                                cursor.execute("INSERT INTO user_rewards (id_user, id_reward) VALUES (%s, %s) "
-                                               "ON DUPLICATE KEY UPDATE id_reward = %s",
-                                               (id_user, new_reward_id, new_reward_id))
+                                reward_increment += 1
 
-                                cursor.execute("SELECT wizard_title FROM rewards WHERE id_reward = %s", (new_reward_id,))
+                            if reward_increment > 0:
+                                new_reward_id = min(reward_increment, max_reward_id)
+
+                                cursor.execute("UPDATE user_rewards SET id_reward = %s where id_user = %s",
+                                               (new_reward_id, id_user))
+
+                                cursor.execute("SELECT wizard_title FROM rewards WHERE id_reward = %s",
+                                               (new_reward_id,))
                                 reward = cursor.fetchone()
                                 reward_title = reward[0] if reward else "Unknown Reward"
                             else:
@@ -89,7 +104,9 @@ def lambda_handler(event, __):
                                 "xp_limit": xp_limit,
                                 "level_up": True,
                                 "xp": random_xp,
-                                "reward_title": reward_title
+                                "reward_title": reward_title,
+                                "reward_increment": reward_increment,
+                                "new_reward_id": new_reward_id
                             })
                         }
 
@@ -106,7 +123,6 @@ def lambda_handler(event, __):
                                 "xp_limit": xp_limit,
                                 "level_up": False,
                                 "xp": random_xp
-
                             })
                         }
 
