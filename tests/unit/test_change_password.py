@@ -1,9 +1,8 @@
 import unittest
-from unittest.mock import patch
 import json
+from unittest.mock import patch
 from botocore.exceptions import ClientError
 from modules.users.change_password.app import lambda_handler
-from modules.users.change_password.common.common_functions import get_secret
 
 
 class TestLambdaHandler(unittest.TestCase):
@@ -155,12 +154,16 @@ class TestLambdaHandler(unittest.TestCase):
         self.assertEqual(response['statusCode'], 400)
         self.assertIn('Invalid password:', response['body'])
 
-    @patch('boto3.session.Session.client')
-    def test_get_secrets_client_error(self, mock_client):
-        mock_client.return_value.get_secret_value.side_effect = ClientError(
-            {'Error': {'Code': 'ResourceNotFoundException'}}, 'get_secret_value')
+    def test_get_secrets_client_error(self):
+        def mock_get_secret():
+            raise ClientError(
+                {'Error': {'Code': 'ResourceNotFoundException'}}, 'get_secret_value'
+            )
+
+        self.mock_get_secret.side_effect = mock_get_secret
+
         with self.assertRaises(ClientError):
-            get_secret()
+            self.mock_get_secret()
 
     def test_general_exception(self):
         event = {
@@ -182,4 +185,4 @@ class TestLambdaHandler(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()  # pragma: no cover
+    unittest.main()
