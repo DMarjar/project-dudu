@@ -32,6 +32,9 @@ jobs:
             fi
           done
 
+      - name: Modify imports for testing
+        run: ./modify_imports.sh test
+
       - name: Install dependencies to test
         run: |
           python -m pip install --upgrade pip
@@ -94,10 +97,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.12'
+
       - name: Install dependencies for all modules
         run: |
           for dir in modules/**/; do
@@ -105,15 +110,22 @@ jobs:
               pip install -r "${dir}/requirements.txt"
             fi
           done
+
+      - name: Modify imports for deployment
+        run: ./modify_imports.sh deploy
+
       - name: Install AWS CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y awscli
+
       - name: Install SAM CLI
         run: |
           pip install aws-sam-cli
+
       - name: Build SAM application
         run: sam build
+        
       - name: Deploy SAM application
         run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name projectDUDU --capabilities CAPABILITY_IAM
         env:
