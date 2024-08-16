@@ -12,16 +12,17 @@ def lambda_handler(event, context):
     }
 
     client = boto3.client('cognito-idp')
-    secret = get_secret()
+    secrets = get_secret()
 
     body = json.loads(event['body'])
     username = body['username']
-    client_id = '739rrbctbufv3tbr652n35kjfn'
-    client_secret = secret['SECRET_CLIENT']
+
+    client_id = secrets['ID_CLIENT']
+    client_secret = secrets['SECRET_CLIENT']
 
     try:
         user = client.admin_get_user(
-            UserPoolId='us-east-2_EXoNvoJRZ',
+            secrets['USER_POOL_ID'],
             Username=username
         )
 

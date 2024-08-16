@@ -12,14 +12,15 @@ def lambda_handler(event, context):
     }
 
     client = boto3.client('cognito-idp')
-    secret = get_secret()
+    secrets = get_secret()
     body = json.loads(event['body'])
     username = body['username']
     confirmation_code = body['confirmation_code']
     new_password = body['new_password']
     confirm_new_password = body['confirm_new_password']
-    client_id = '739rrbctbufv3tbr652n35kjfn'
-    client_secret = secret['SECRET_CLIENT']
+
+    client_id = secrets['ID_CLIENT']
+    client_secret = secrets['SECRET_CLIENT']
 
     if new_password != confirm_new_password:
         return {
