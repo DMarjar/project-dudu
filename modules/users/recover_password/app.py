@@ -4,7 +4,6 @@ from common.common_functions import get_secret, get_secret_hash
 
 
 def lambda_handler(event, context):
-
     headers = {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
@@ -52,10 +51,10 @@ def lambda_handler(event, context):
                 'headers': headers
             }
 
-    except client.exceptions.UserNotFoundException:
+    except client.exceptions.UserNotFoundException as e:
         return {
             'statusCode': 404,
-            'body': json.dumps('User not found.'),
+            'body': json.dumps(f'User not found: {str(e)}'),
             'headers': headers
         }
     except Exception as e:
