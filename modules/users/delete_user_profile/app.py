@@ -19,6 +19,12 @@ def lambda_handler(event, context):
         dict: A dictionary containing the status code and a message
     """
 
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+    }
+
     try:
         body = json.loads(event['body'])
         validate_body_for_deletion(body)
@@ -32,30 +38,35 @@ def lambda_handler(event, context):
 
         response = {
             'statusCode': 200,
+            'headers': headers,
             'body': json.dumps("User deleted successfully")
         }
 
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
+            'headers': headers,
             'body': json.dumps({"message": str(e)})
         }
 
     except ClientError as e:
         response = {
             'statusCode': 500,
+            'headers': headers,
             'body': json.dumps({"message": f"AWS Client Error: {str(e)}"})
         }
 
     except NoCredentialsError as e:
         response = {
             'statusCode': 500,
+            'headers': headers,
             'body': json.dumps({"message": f"Credentials Error: {str(e)}"})
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
+            'headers': headers,
             'body': json.dumps({"message": f"An unexpected error occurred: {str(e)}"})
         }
 
