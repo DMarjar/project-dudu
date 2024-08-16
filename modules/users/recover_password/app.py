@@ -88,12 +88,15 @@ def get_username_by_email(email, secrets):
             Filter=f'email = "{email}"'
         )
 
-        if response['Users']:
+        if 'Users' in response and len(response['Users']) > 0:
             return response['Users'][0]['Username']
         else:
             raise HttpStatusCodeError(404, "User not found")
     except ClientError as e:
-        raise HttpStatusCodeError(500, "Error retrieving user by email -> " + str(e))
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+        raise HttpStatusCodeError(500, f"Error retrieving user by email -> {error_code}: {error_message}")
+
 
 
 def get_secret():
