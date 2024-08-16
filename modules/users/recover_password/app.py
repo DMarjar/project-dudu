@@ -10,7 +10,7 @@ def lambda_handler(event, context):
         'Access-Control-Allow-Methods': 'OPTIONS,POST'
     }
 
-    client = boto3.client('cognito-idp')
+    client = boto3.client('cognito-idp', region_name='us-east-2')
     secrets = get_secret()
 
     body = json.loads(event['body'])
