@@ -80,17 +80,20 @@ def get_username_by_email(email, secrets):
     client = boto3.client('cognito-idp', region_name='us-east-2')
     user_pool_id = secrets['USER_POOL_ID']
 
-    # Search for the user by email
-    response = client.list_users(
-        UserPoolId=user_pool_id,
-        AttributesToGet=['username'],
-        Filter=f'email = "{email}"'
-    )
+    try:
+        # Perform a list users operation with the email filter
+        response = client.list_users(
+            UserPoolId=user_pool_id,
+            AttributesToGet=['username'],
+            Filter=f'email = "{email}"'
+        )
 
-    if response['Users']:
-        return response['Users'][0]['Username']
-    else:
-        raise HttpStatusCodeError(404, "User not found")
+        if response['Users']:
+            return response['Users'][0]['Username']
+        else:
+            raise HttpStatusCodeError(404, "User not found")
+    except ClientError as e:
+        raise HttpStatusCodeError(500, "Error retrieving user by email -> " + str(e))
 
 
 def get_secret():
