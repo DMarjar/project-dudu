@@ -95,98 +95,109 @@ class TestLambdaHandler(unittest.TestCase):
                 self.assertEqual(response['statusCode'], 400)
                 self.assertEqual(json.loads(response['body']), 'Invalid confirmation code.')
 
+    def test_password_mismatch(self):
+        with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
+            event = {
+                'body': json.dumps({
+                    'username': 'testuser',
+                    'confirmation_code': '123456',
+                    'new_password': 'newpassword123',
+                    'confirm_new_password': 'mismatchpassword'
+                })
+            }
+
+            context = {}
+            response = lambda_handler(event, context)
+
+            self.assertEqual(response['statusCode'], 400)
+            self.assertEqual(json.loads(response['body']), 'New password and confirmation password do not match.')
+
+    def test_expired_code_exception(self):
+        with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
+            # Simulamos la excepción ExpiredCodeException en el cliente de Cognito
+            with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password', side_effect=ClientError(
+                    {'Error': {'Code': 'ExpiredCodeException', 'Message': 'The confirmation code has expired.'}},
+                    'ConfirmForgotPassword'
+            )):
+                event = {
+                    'body': json.dumps({
+                        'username': 'testuser',
+                        'confirmation_code': '123456',
+                        'new_password': 'newpassword123',
+                        'confirm_new_password': 'newpassword123'
+                    })
+                }
+
+                context = {}
+                response = lambda_handler(event, context)
+
+                self.assertEqual(response['statusCode'], 400)
+                self.assertEqual(json.loads(response['body']), 'Confirmation code has expired.')
+
+    def test_invalid_password_exception(self):
+        with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
+            # Simulamos la excepción InvalidPasswordException en el cliente de Cognito
+            with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password', side_effect=ClientError(
+                    {'Error': {'Code': 'InvalidPasswordException', 'Message': 'The password provided is invalid.'}},
+                    'ConfirmForgotPassword'
+            )):
+                event = {
+                    'body': json.dumps({
+                        'username': 'testuser',
+                        'confirmation_code': '123456',
+                        'new_password': 'newpassword123',
+                        'confirm_new_password': 'newpassword123'
+                    })
+                }
+
+                context = {}
+                response = lambda_handler(event, context)
+
+                self.assertEqual(response['statusCode'], 400)
+                self.assertEqual(json.loads(response['body']), 'Invalid password.')
+
+    def test_user_not_found_exception(self):
+        with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
+            # Simulamos la excepción UserNotFoundException en el cliente de Cognito
+            with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password', side_effect=ClientError(
+                    {'Error': {'Code': 'UserNotFoundException', 'Message': 'User does not exist.'}},
+                    'ConfirmForgotPassword'
+            )):
+                event = {
+                    'body': json.dumps({
+                        'username': 'testuser',
+                        'confirmation_code': '123456',
+                        'new_password': 'newpassword123',
+                        'confirm_new_password': 'newpassword123'
+                    })
+                }
+
+                context = {}
+                response = lambda_handler(event, context)
+
+                self.assertEqual(response['statusCode'], 404)
+                self.assertEqual(json.loads(response['body']), 'User not found.')
+
+    def test_generic_exception(self):
+        with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
+            # Simulamos una excepción genérica en el cliente de Cognito
+            with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password',
+                              side_effect=Exception('Some generic error')):
+                event = {
+                    'body': json.dumps({
+                        'username': 'testuser',
+                        'confirmation_code': '123456',
+                        'new_password': 'newpassword123',
+                        'confirm_new_password': 'newpassword123'
+                    })
+                }
+
+                context = {}
+                response = lambda_handler(event, context)
+
+                self.assertEqual(response['statusCode'], 500)
+                self.assertEqual(json.loads(response['body']),
+                                 'An error occurred while resetting the password: Some generic error')
+
     if __name__ == '__main__':
-        unittest.main()
-
-
-
-    #
-    # def test_password_mismatch(self):
-    #     event = {
-    #         'body': json.dumps({
-    #             'username': 'testuser',
-    #             'confirmation_code': '123456',
-    #             'new_password': 'newpassword123',
-    #             'confirm_new_password': 'mismatchpassword'
-    #         })
-    #     }
-    #     context = {}
-    #     response = lambda_handler(event, context)
-    #     self.assertEqual(response['statusCode'], 400)
-    #     self.assertEqual(json.loads(response['body']), 'New password and confirmation password do not match.')
-    #
-    # def test_expired_code_exception(self):
-    #     self.fake_client.confirm_forgot_password = MagicMock()
-    #     self.fake_client.confirm_forgot_password.side_effect = ClientError(
-    #         {'Error': {'Code': 'ExpiredCodeException'}}, 'ConfirmForgotPassword'
-    #     )
-    #
-    #     event = {
-    #         'body': json.dumps({
-    #             'username': 'testuser',
-    #             'confirmation_code': '123456',
-    #             'new_password': 'newpassword123',
-    #             'confirm_new_password': 'newpassword123'
-    #         })
-    #     }
-    #     context = {}
-    #     response = lambda_handler(event, context)
-    #     self.assertEqual(response['statusCode'], 400)
-    #     self.assertEqual(json.loads(response['body']), 'Confirmation code has expired.')
-    #
-    # def test_invalid_password_exception(self):
-    #     self.fake_client.confirm_forgot_password = MagicMock()
-    #     self.fake_client.confirm_forgot_password.side_effect = ClientError(
-    #         {'Error': {'Code': 'InvalidPasswordException'}}, 'ConfirmForgotPassword'
-    #     )
-    #
-    #     event = {
-    #         'body': json.dumps({
-    #             'username': 'testuser',
-    #             'confirmation_code': '123456',
-    #             'new_password': 'newpassword123',
-    #             'confirm_new_password': 'newpassword123'
-    #         })
-    #     }
-    #     context = {}
-    #     response = lambda_handler(event, context)
-    #     self.assertEqual(response['statusCode'], 400)
-    #     self.assertEqual(json.loads(response['body']), 'Invalid password.')
-    #
-    # def test_user_not_found_exception(self):
-    #     self.fake_client.confirm_forgot_password = MagicMock()
-    #     self.fake_client.confirm_forgot_password.side_effect = ClientError(
-    #         {'Error': {'Code': 'UserNotFoundException'}}, 'ConfirmForgotPassword'
-    #     )
-    #
-    #     event = {
-    #         'body': json.dumps({
-    #             'username': 'testuser',
-    #             'confirmation_code': '123456',
-    #             'new_password': 'newpassword123',
-    #             'confirm_new_password': 'newpassword123'
-    #         })
-    #     }
-    #     context = {}
-    #     response = lambda_handler(event, context)
-    #     self.assertEqual(response['statusCode'], 404)
-    #     self.assertEqual(json.loads(response['body']), 'User not found.')
-    #
-    # def test_generic_exception(self):
-    #     self.fake_client.confirm_forgot_password = MagicMock()
-    #     self.fake_client.confirm_forgot_password.side_effect = Exception('Some generic error')
-    #
-    #     event = {
-    #         'body': json.dumps({
-    #             'username': 'testuser',
-    #             'confirmation_code': '123456',
-    #             'new_password': 'newpassword123',
-    #             'confirm_new_password': 'newpassword123'
-    #         })
-    #     }
-    #     context = {}
-    #     response = lambda_handler(event, context)
-    #     self.assertEqual(response['statusCode'], 500)
-    #     self.assertEqual(json.loads(response['body']),
-    #                      'An error occurred while resetting the password: Some generic error')
-
+        unittest.main()  # pragma: no cover
