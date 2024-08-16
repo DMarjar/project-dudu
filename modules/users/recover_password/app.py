@@ -4,7 +4,7 @@ import base64
 import hashlib
 import hmac
 from botocore.exceptions import ClientError, NoCredentialsError
-from modules.users.recover_password.common.httpStatusCodeError import HttpStatusCodeError
+from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, context):

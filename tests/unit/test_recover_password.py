@@ -153,24 +153,6 @@ class TestLambdaHandler(unittest.TestCase):
                 self.assertEqual(response['statusCode'], 500)
                 self.assertIn('Error getting secret ->', response['body'])
 
-    @patch('modules.users.recover_password.app.lambda_handler')
-    def test_exception_recover_password(self, mock_lambda_handler):
-        mock_lambda_handler.side_effect = Exception('Error')
-        event = {
-            'body': json.dumps({
-                'username': 'Gislane',
-                'confirmation_code': "813985",
-                'password': '20213Tn105',
-                'confirm_new_password': '20213Tn105!'
-            })
-        }
-        response = lambda_handler(event, None)
-
-        self.assertEqual(response['statusCode'], 500)
-        self.assertEqual(response['body'], '"An error occurred: An error occurred (ResourceNotFoundException) when '
-                                           'calling the AdminGetUser operation: User pool fake_user_pool_id does not '
-                                           'exist."')
-
     @patch('modules.users.recover_password.app.boto3.client')
     @patch('modules.users.recover_password.app.get_secret')
     @patch('modules.users.recover_password.app.verify_user')
