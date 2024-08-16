@@ -147,6 +147,35 @@ class TestLambdaHandler(unittest.TestCase):
 
         with self.assertRaises(HttpStatusCodeError):
             get_secret()
+    @patch('modules.profile.update_profile.app.get_db_connection')
+    @patch('modules.profile.update_profile.app.get_secret')
+    @patch('modules.profile.update_profile.app.update_cognito_user')
+    @patch('modules.profile.update_profile.app.update_user_db')
+    def test_lambda_handler_client_error(self, mock_update_user_db, mock_update_cognito_user, mock_get_secret,
+                                         mock_get_db_connection):
+        mock_get_secret.return_value = {'USER_POOL_ID': 'fake_user_pool_id'}
+        mock_update_cognito_user.side_effect = ClientError(
+            {"Error": {"Code": "ClientError", "Message": "Client error"}},
+            "AdminUpdateUserAttributes"
+        )
+
+        event = {
+            'body': json.dumps({
+                'sub': 'fake_sub',
+                'id_user': 'fake_id_user',
+                'email': 'test@example.com',
+                'gender': 'M'
+            })
+        }
+
+        response = lambda_handler(event, None)
+        self.assertEqual(response['statusCode'], 500)
+        self.assertIn("AWS Client Error", json.loads(response['body'])['message'])
+
+
+
+
+
 
 
 if __name__ == '__main__':
