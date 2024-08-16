@@ -8,6 +8,12 @@ from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, context):
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
+    }
+
     try:
         body = json.loads(event['body'])
         validate_body(body)
@@ -17,34 +23,39 @@ def lambda_handler(event, context):
         update_cognito_user(body['sub'], body, secrets)
 
         # Actualizar el usuario en la base de datos
-        update_user_db(body['id_user'], body['gender'] )
+        update_user_db(body['id_user'], body['gender'])
 
         response = {
             'statusCode': 200,
+            'headers': headers,
             'body': json.dumps("User updated successfully")
         }
 
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
+            'headers': headers,
             'body': json.dumps({"message": str(e)})
         }
 
     except ClientError as e:
         response = {
             'statusCode': 500,
+            'headers': headers,
             'body': json.dumps({"message": f"AWS Client Error: {str(e)}"})
         }
 
     except NoCredentialsError as e:
         response = {
             'statusCode': 500,
+            'headers': headers,
             'body': json.dumps({"message": f"Credentials Error: {str(e)}"})
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
+            'headers': headers,
             'body': json.dumps({"message": f"An unexpected error occurred: {str(e)}"})
         }
 
