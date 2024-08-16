@@ -171,9 +171,26 @@ class TestLambdaHandler(unittest.TestCase):
         response = lambda_handler(event, None)
         self.assertEqual(response['statusCode'], 500)
         self.assertIn("AWS Client Error", json.loads(response['body'])['message'])
+    @patch('modules.profile.update_profile.app.get_db_connection')
+    @patch('modules.profile.update_profile.app.get_secret')
+    @patch('modules.profile.update_profile.app.update_cognito_user')
+    @patch('modules.profile.update_profile.app.update_user_db')
+    def test_lambda_handler_no_credentials_error(self, mock_update_user_db, mock_update_cognito_user,
+                                                  mock_get_secret, mock_get_db_connection):
+        mock_get_secret.side_effect = NoCredentialsError()
 
+        event = {
+            'body': json.dumps({
+                'sub': 'fake_sub',
+                'id_user': 'fake_id_user',
+                'email': 'test@example.com',
+                'gender': 'M'
+            })
+        }
 
-
+        response = lambda_handler(event, None)
+        self.assertEqual(response['statusCode'], 500)
+        self.assertIn("Credentials Error", json.loads(response['body'])['message'])
 
 
 
