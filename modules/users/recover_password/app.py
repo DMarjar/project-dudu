@@ -4,7 +4,7 @@ import base64
 import hashlib
 import hmac
 from botocore.exceptions import ClientError, NoCredentialsError
-from common.httpStatusCodeError import HttpStatusCodeError
+from .common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
@@ -20,7 +20,16 @@ def lambda_handler(event, ___):
 
         secrets = get_secret()
 
-        verify_user(body['username'], secrets)
+        username = body['username']
+        try:
+            verify_user(username, secrets)
+        except HttpStatusCodeError as e:
+            if "User does not exist" in str(e):
+                # Si el usuario no existe, asume que es un email e intenta obtener el username asociado
+                username = get_username_from_email(username, secrets)
+                verify_user(username, secrets)
+            else:
+                raise
 
         client = boto3.client('cognito-idp', region_name='us-east-2')
         client_id = secrets['ID_CLIENT']
@@ -96,10 +105,16 @@ def verify_user(username, secrets):
     client = boto3.client('cognito-idp', region_name='us-east-2')
     user_pool_id = secrets['USER_POOL_ID']
 
-    user = client.admin_get_user(
-        UserPoolId=user_pool_id,
-        Username=username
-    )
+    try:
+        user = client.admin_get_user(
+            UserPoolId=user_pool_id,
+            Username=username
+        )
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'UserNotFoundException':
+            raise HttpStatusCodeError(404, "User does not exist")
+        else:
+            raise
 
     email_verified = user['UserAttributes'][1]['Value']
     user_status = user['UserStatus']
@@ -116,3 +131,20 @@ def get_secret_hash(username, client_id, client_secret):
     message = username + client_id
     dig = hmac.new(client_secret.encode('utf-8'), message.encode('utf-8'), hashlib.sha256).digest()
     return base64.b64encode(dig).decode()
+
+def get_username_from_email(email, secrets):
+    client = boto3.client('cognito-idp', region_name='us-east-2')
+    user_pool_id = secrets['USER_POOL_ID']
+
+    try:
+        response = client.list_users(
+            UserPoolId=user_pool_id,
+            Filter=f'email = "{email}"'
+        )
+        if len(response['Users']) == 0:
+            raise HttpStatusCodeError(404, "No user found with the provided email")
+
+        return response['Users'][0]['Username']
+
+    except ClientError as e:
+        raise HttpStatusCodeError(500, "Error getting username from email -> " + str(e))
