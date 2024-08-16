@@ -18,7 +18,7 @@ def lambda_handler(event, context):
     confirmation_code = body['confirmation_code']
     new_password = body['new_password']
     confirm_new_password = body['confirm_new_password']
-    client_id = '4iid9n3o306aorf0imcs0dcplo'
+    client_id = '739rrbctbufv3tbr652n35kjfn'
     client_secret = secret['SECRET_CLIENT']
 
     if new_password != confirm_new_password:
