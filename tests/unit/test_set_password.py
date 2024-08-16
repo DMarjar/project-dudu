@@ -181,8 +181,9 @@ class Test(TestCase):
                          '"New password must contain at least 8 characters, one uppercase, one lowercase, one number and one special character"')
 
     @patch('modules.users.set_password.app.set_password')
-    def test_exception_set_password(self, mock_set_password):
-
+    @patch('boto3.session.Session')
+    def test_exception_set_password(self, mock_session, mock_set_password):
+        mock_session.return_value = FakeSessionTestLambdaHandler()
         mock_set_password.side_effect = Exception('Error')
 
         response = app.lambda_handler(EVENT, None)
