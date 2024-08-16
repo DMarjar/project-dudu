@@ -20,18 +20,11 @@ def lambda_handler(event, ___):
 
         secrets = get_secret()
 
+        verify_user(body['username'], secrets)
+
         client = boto3.client('cognito-idp', region_name='us-east-2')
         client_id = secrets['ID_CLIENT']
         client_secret = secrets['SECRET_CLIENT']
-
-        if '@' in body['username']:
-            # Input is an email address
-            username = get_username_by_email(body['username'], secrets)
-        else:
-            # Input is a username
-            username = body['username']
-
-        verify_user(username, secrets)
 
         secret_hash = get_secret_hash(body['username'], client_id, client_secret)
 
@@ -74,29 +67,6 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "Username must be a string")
 
     return True
-
-
-def get_username_by_email(email, secrets):
-    client = boto3.client('cognito-idp', region_name='us-east-2')
-    user_pool_id = secrets['USER_POOL_ID']
-
-    try:
-        # Perform a list users operation with the email filter
-        response = client.list_users(
-            UserPoolId=user_pool_id,
-            AttributesToGet=['username'],
-            Filter=f'email = "{email}"'
-        )
-
-        if 'Users' in response and len(response['Users']) > 0:
-            return response['Users'][0]['Username']
-        else:
-            raise HttpStatusCodeError(404, "User not found")
-    except ClientError as e:
-        error_code = e.response['Error']['Code']
-        error_message = e.response['Error']['Message']
-        raise HttpStatusCodeError(500, f"Error retrieving user by email -> {error_code}: {error_message}")
-
 
 
 def get_secret():
