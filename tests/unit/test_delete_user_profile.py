@@ -102,8 +102,9 @@ class TestDeleteUserProfile(unittest.TestCase):
 
     """Test to ensure the database connection is established and not None"""
 
-    @patch('boto3.client')  # Asegúrate de que la ruta sea correcta
+    @patch('modules.users.delete_user_profile.common.db_connection.boto3.client')
     def test_get_db_connection(self, mock_boto_client):
+        # Configura el mock para boto3.client
         mock_client = MagicMock()
         mock_client.get_secret_value.return_value = {
             'SecretString': '{"db_password": "test_password"}'
