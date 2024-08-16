@@ -107,7 +107,10 @@ class TestDeleteUserProfile(unittest.TestCase):
         # Configura el mock para boto3.client
         mock_client = MagicMock()
         mock_client.get_secret_value.return_value = {
-            'SecretString': '{"db_password": "test_password"}'
+            'SecretString': json.dumps({
+                'username': 'test_user',
+                'password': 'test_password'
+            })
         }
         mock_boto_client.return_value = mock_client
 
