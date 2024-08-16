@@ -33,7 +33,7 @@ def lambda_handler(event, context):
         if not email:
             return {
                 'statusCode': 404,
-                'body': json.dumps('User email not found.'),
+                'body': json.dumps(f'User email not found. {client_id}'),
                 'headers': headers
             }
 
@@ -54,7 +54,7 @@ def lambda_handler(event, context):
     except client.exceptions.UserNotFoundException as e:
         return {
             'statusCode': 404,
-            'body': json.dumps(f'User not found: {str(e)}'),
+            'body': json.dumps(f'User not found: {str(e)} {client_id}'),
             'headers': headers
         }
     except Exception as e:
@@ -83,6 +83,6 @@ def lambda_handler(event, context):
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': json.dumps('An error occurred: ' + str(e)),
+            'body': json.dumps('An error occurred: ' + str(e) + client_id),
             'headers': headers
         }
