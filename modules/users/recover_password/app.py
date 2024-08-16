@@ -21,7 +21,7 @@ def lambda_handler(event, context):
 
     try:
         user = client.admin_get_user(
-            UserPoolId='us-east-2_bjlyJabGh',
+            UserPoolId='us-east-2_EXoNvoJRZ',
             Username=username
         )
 
