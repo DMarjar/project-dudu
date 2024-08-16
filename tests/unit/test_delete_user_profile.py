@@ -1,6 +1,6 @@
 import json
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 
 import boto3
 import pytest
@@ -148,19 +148,62 @@ class TestDeleteUserProfile(unittest.TestCase):
         self.print_response({'statusCode': 200, 'body': json.dumps(secret)})
 
     """Test lambda_handler function"""
-    def test_lambda_handler_success(self):
+
+    @patch('modules.users.delete_user_profile.app.delete_cognito_user')
+    @patch('modules.users.delete_user_profile.app.get_db_connection')
+    @patch('modules.users.delete_user_profile.app.get_secret')
+    @patch('modules.users.delete_user_profile.app.validate_body_for_deletion')
+    def test_lambda_handler_success(self, mock_validate_body, mock_get_secret, mock_get_db_connection,
+                                    mock_delete_cognito_user):
+        # Mocking the validation function to pass
+        mock_validate_body.return_value = True
+
+        # Mocking the secrets retrieval
+        mock_get_secret.return_value = {'USER_POOL_ID': 'us-east-2_example'}
+
+        # Mocking the database connection
+        mock_connection = Mock()
+        mock_cursor = MagicMock()
+
+        # Configurar el cursor para manejar el contexto de administrador
+        mock_cursor.__enter__.return_value = mock_cursor
+        mock_cursor.__exit__.return_value = None
+
+        # Asignar el cursor al método cursor del mock_connection
+        mock_connection.cursor.return_value = mock_cursor
+        mock_get_db_connection.return_value = mock_connection
+
+        # Mocking the deletion function in Cognito to do nothing
+        mock_delete_cognito_user.return_value = None
+
+        # Creating a test event
         event = {
             'body': json.dumps({
                 'sub': '814b85d0-7001-7093-a1e1-0412495ca7a3',
                 'id_user': '814b85d0-7001-7093-a1e1-0412495ca7a3'
             })
         }
-        context = {}  # Mock context if needed
+        context = {}  # Mock context if necessary
+
+        # Running the handler
         response = lambda_handler(event, context)
-        print("Status Code:", response['statusCode'])
-        print("Response Body:", json.loads(response['body']))
-        assert response['statusCode'] == 200
-        assert json.loads(response['body']) == "User deleted successfully"
+
+        # Assertions to verify behavior
+        self.assertEqual(response['statusCode'], 200)
+        self.assertIn('User deleted successfully', response['body'])
+        mock_validate_body.assert_called_once()
+        mock_delete_cognito_user.assert_called_once_with('814b85d0-7001-7093-a1e1-0412495ca7a3',
+                                                         {'USER_POOL_ID': 'us-east-2_example'})
+        mock_get_db_connection.assert_called_once()
+
+        # Check if the database operations were called
+        mock_cursor.execute.assert_any_call("DELETE FROM user_rewards WHERE id_user = %s",
+                                            ('814b85d0-7001-7093-a1e1-0412495ca7a3',))
+        mock_cursor.execute.assert_any_call("DELETE FROM users WHERE id_user = %s",
+                                            ('814b85d0-7001-7093-a1e1-0412495ca7a3',))
+        mock_connection.commit.assert_called_once()
+
+        print("Test Passed: Successful user deletion")
 
     """Test lambda_handler function with invalid input"""
     def test_lambda_handler_invalid_input(self):
