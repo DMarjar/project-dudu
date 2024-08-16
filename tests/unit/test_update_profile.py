@@ -4,7 +4,7 @@ import json
 
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from modules.profile.update_profile.app import lambda_handler, validate_body, get_secret
+from modules.profile.update_profile.app import lambda_handler, validate_body, get_secret, get_username_from_sub
 from modules.profile.update_profile.common.httpStatusCodeError import HttpStatusCodeError
 
 
@@ -326,6 +326,63 @@ class TestLambdaHandler(unittest.TestCase):
         # Verifica el código de estado y el mensaje
         self.assertEqual(context.exception.status_code, 400)
         self.assertEqual(context.exception.message, "id_user is required and must be a non-empty string")
+
+    def test_validate_body_email_missing(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': 'fake_id_user',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        # Verifica el código de estado y el mensaje
+        self.assertEqual(context.exception.status_code, 400)
+        self.assertEqual(context.exception.message, "email is required")
+
+
+    @patch('modules.profile.update_profile.app.boto3.client')
+    def test_get_username_from_sub_success(self, mock_boto_client):
+        # Configuración del mock
+        mock_client = MagicMock()
+        mock_boto_client.return_value = mock_client
+        mock_client.list_users.return_value = {
+            'Users': [{'Username': 'test_username'}]
+        }
+
+        # Llamada a la función con datos simulados
+        sub = 'fake_sub'
+        user_pool_id = 'fake_user_pool_id'
+        username = get_username_from_sub(sub, user_pool_id)
+
+        # Verificaciones
+        self.assertEqual(username, 'test_username')
+        mock_client.list_users.assert_called_once_with(
+            UserPoolId=user_pool_id,
+            Filter=f'sub="{sub}"'
+        )
+
+    @patch('modules.profile.update_profile.app.boto3.client')
+    def test_get_username_from_sub_user_not_found(self, mock_boto_client):
+        # Configuración del mock
+        mock_client = MagicMock()
+        mock_boto_client.return_value = mock_client
+        mock_client.list_users.return_value = {
+            'Users': []
+        }
+
+        # Llamada a la función con datos simulados
+        sub = 'fake_sub'
+        user_pool_id = 'fake_user_pool_id'
+
+        with self.assertRaises(Exception) as context:
+            get_username_from_sub(sub, user_pool_id)
+
+        # Verificaciones
+        self.assertEqual(str(context.exception), "User not found")
+        mock_client.list_users.assert_called_once_with(
+            UserPoolId=user_pool_id,
+            Filter=f'sub="{sub}"'
+        )
 
 if __name__ == '__main__':
     unittest.main()
