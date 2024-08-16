@@ -1,4 +1,5 @@
 import json
+import unittest
 from unittest import TestCase
 from unittest.mock import patch
 from modules.missions.search_mission import app
@@ -455,3 +456,6 @@ class TestSearchMissions(TestCase):
         # Assert
         self.assertEqual(response, [])
         self.assertEqual(total, 0)
+
+if __name__ == '__main__':
+    unittest.main()

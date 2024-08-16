@@ -63,8 +63,6 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "Password is required")
     if not body['password']:
         raise HttpStatusCodeError(400, "Password is required")
-    if body['password'] is None:
-        raise HttpStatusCodeError(400, "Password is required")
     if not isinstance(body['password'], str):
         raise HttpStatusCodeError(400, "Password must be a string")
 
@@ -73,8 +71,6 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "Username is required")
     if not body['username']:
         raise HttpStatusCodeError(400, "Username is required")
-    if body['username'] is None:
-        raise HttpStatusCodeError(400, "Username is required")
     if not isinstance(body['username'], str):
         raise HttpStatusCodeError(400, "Username must be a string")
 
@@ -82,8 +78,6 @@ def validate_body(body):
     if 'new_password' not in body:
         raise HttpStatusCodeError(400, "New password is required")
     if not body['new_password']:
-        raise HttpStatusCodeError(400, "New password is required")
-    if body['new_password'] is None:
         raise HttpStatusCodeError(400, "New password is required")
     if not isinstance(body['new_password'], str):
         raise HttpStatusCodeError(400, "New password must be a string")

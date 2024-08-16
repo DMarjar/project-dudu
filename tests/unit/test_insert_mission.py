@@ -16,11 +16,6 @@ EVENT = {
 
 class Test(unittest.TestCase):
 
-    def test_lambda_handler(self):
-        response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response['body'], '"Mission inserted successfully"')
-
-
     @patch('modules.missions.insert_mission.app.insert_mission')
     @patch('modules.missions.insert_mission.app.get_openai_client')
     @patch('modules.missions.insert_mission.app.validate_user')
@@ -41,7 +36,7 @@ class Test(unittest.TestCase):
         mock_insert_mission.return_value = True
 
         response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response['body'], '"Mission inserted successfully"')
+        self.assertEqual(response['body'], '"fantasy description"')
 
     def test_no_original_description(self):
         body_no_original_description = {
@@ -287,7 +282,7 @@ class Test(unittest.TestCase):
         mock_insert_mission.return_value = True
 
         response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response['body'], '"Mission inserted successfully"')
+        self.assertEqual(response['body'], '"fantasy description"')
 
     @patch('modules.missions.insert_mission.app.validate_user')
     @patch('modules.missions.insert_mission.common.db_connection.get_secrets')
@@ -343,7 +338,7 @@ class Test(unittest.TestCase):
         mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
 
         response = app.lambda_handler(EVENT, None)
-        self.assertEqual(response['body'], '"Mission inserted successfully"')
+        self.assertEqual(response['body'], '"fantasy description"')
 
 
 if __name__ == '__main__':

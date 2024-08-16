@@ -241,23 +241,6 @@ Resources:
             Path: /insert_mission
             Method: post
 
-  GetOneMissionFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: modules/missions/get_one_mission/
-      Handler: app.lambda_handler
-      Runtime: python3.12
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Architectures:
-        - x86_64
-      Events:
-        GetOneMission:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MissionApi
-            Path: /get_one_mission/{id_mission}
-            Method: get
-
   RecoverPasswordFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -520,9 +503,6 @@ Outputs:
   MissionExpirationApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Mission Expiration function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mission_expiration/"
-  GetOneMissionApiUrl:
-    Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
   GetProfileApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get Profile function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_profile/"
@@ -574,9 +554,6 @@ Outputs:
   InsertMissionFunctionArn:
     Description: "Insert Mission Lambda Function ARN"
     Value: !GetAtt InsertMissionFunction.Arn
-  GetOneMissionFunctionArn:
-    Description: "Get One Mission Lambda Function ARN"
-    Value: !GetAtt GetOneMissionFunction.Arn
   RecoverPasswordFunctionArn:
     Description: "Recover Password Lambda Function ARN"
     Value: !GetAtt RecoverPasswordFunction.Arn

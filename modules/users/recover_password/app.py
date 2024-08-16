@@ -1,75 +1,36 @@
 import boto3
 import json
-from common.common_functions import get_secret, get_secret_hash
+import base64
+import hashlib
+import hmac
+from botocore.exceptions import ClientError, NoCredentialsError
+from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, context):
-
     headers = {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'OPTIONS,POST'
     }
 
-    client = boto3.client('cognito-idp')
-    secret = get_secret()
-
-    body = json.loads(event['body'])
-    username = body['username']
-    client_id = '4iid9n3o306aorf0imcs0dcplo'
-    client_secret = secret['SECRET_CLIENT']
-
     try:
-        user = client.admin_get_user(
-            UserPoolId='us-east-2_bjlyJabGh',
-            Username=username
-        )
+        body = json.loads(event['body'])
+        validate_body(body)
 
-        email = next((attr['Value'] for attr in user['UserAttributes'] if attr['Name'] == 'email'), None)
-        email_verified = next((attr['Value'] for attr in user['UserAttributes'] if attr['Name'] == 'email_verified'),
-                              'false')
-        user_status = user['UserStatus']
+        secrets = get_secret()
 
-        if not email:
-            return {
-                'statusCode': 404,
-                'body': json.dumps('User email not found.'),
-                'headers': headers
-            }
+        verify_user(body['username'], secrets)
 
-        if email_verified != 'true':
-            return {
-                'statusCode': 400,
-                'body': json.dumps('User email not verified.'),
-                'headers': headers
-            }
+        client = boto3.client('cognito-idp', region_name='us-east-2')
+        client_id = secrets['ID_CLIENT']
+        client_secret = secrets['SECRET_CLIENT']
 
-        if user_status != 'CONFIRMED':
-            return {
-                'statusCode': 400,
-                'body': json.dumps("User account hasn't been confirmed."),
-                'headers': headers
-            }
-
-    except client.exceptions.UserNotFoundException:
-        return {
-            'statusCode': 404,
-            'body': json.dumps('User not found.'),
-            'headers': headers
-        }
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps('An error occurred while checking user existence: ' + str(e)),
-            'headers': headers
-        }
-
-    try:
-        secret_hash = get_secret_hash(email, client_id, client_secret)
+        secret_hash = get_secret_hash(body['username'], client_id, client_secret)
 
         response = client.forgot_password(
             ClientId=client_id,
-            Username=email,
+            Username=body['username'],
             SecretHash=secret_hash
         )
 
@@ -77,7 +38,13 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
-            'body': json.dumps(response['CodeDeliveryDetails']),
+            'body': json.dumps('A code to reset your password was sent to your email'),
+            'headers': headers
+        }
+    except HttpStatusCodeError as e:
+        return {
+            'statusCode': e.status_code,
+            'body': json.dumps(str(e)),
             'headers': headers
         }
     except Exception as e:
@@ -86,3 +53,72 @@ def lambda_handler(event, context):
             'body': json.dumps('An error occurred: ' + str(e)),
             'headers': headers
         }
+
+
+def verify_user(username, secrets):
+    client = boto3.client('cognito-idp', region_name='us-east-2')
+    user_pool_id = secrets['USER_POOL_ID']
+
+    user = client.admin_get_user(
+        UserPoolId=user_pool_id,
+        Username=username
+    )
+
+    email_verified = user['UserAttributes'][1]['Value']
+    user_status = user['UserStatus']
+
+    if str.lower(email_verified) != 'true':
+        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD BECAUSE OF EMAIL VERIFICATION")
+    if user_status != 'CONFIRMED':
+        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD BECAUSE OF USER STATUS NOT CONFIRMED")
+
+    return True
+
+
+def get_secret():
+    secret_name = "users_pool/client_secret2"
+    region_name = "us-east-2"
+
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+    except NoCredentialsError as e:
+        raise HttpStatusCodeError(500, "Error getting secret -> " + str(e))
+
+    secret = get_secret_value_response['SecretString']
+    return json.loads(secret)
+
+
+def validate_body(body):
+    """
+    Validate payload
+    Args:
+        body (dict): Payload
+        - username (str): User username
+    """
+    # Validate username
+    if 'username' not in body:
+        raise HttpStatusCodeError(400, "Username is required")
+    if not body['username']:
+        raise HttpStatusCodeError(400, "Username is required")
+    if body['username'] is None:
+        raise HttpStatusCodeError(400, "Username is required")
+    if not isinstance(body['username'], str):
+        raise HttpStatusCodeError(400, "Username must be a string")
+
+    return True
+
+
+def get_secret_hash(username, client_id, client_secret):
+    message = username + client_id
+    dig = hmac.new(client_secret.encode('utf-8'), message.encode('utf-8'), hashlib.sha256).digest()
+    return base64.b64encode(dig).decode()

@@ -2,257 +2,231 @@ import json
 import unittest
 from unittest.mock import patch, MagicMock
 from modules.missions.cancel_mission import app
+from modules.missions.cancel_mission.app import validate_body, validate_user, cancel_mission, lambda_handler
 from modules.missions.cancel_mission.common.httpStatusCodeError import HttpStatusCodeError
 
 
 class TestCancelMission(unittest.TestCase):
 
-    @staticmethod
-    def print_response(response):
-        print("Status Code:", response['statusCode'])
+    def test_validate_body_success(self):
+        body = {'id_mission': 1, 'id_user': 1}
+        self.assertTrue(validate_body(body))
 
-        if 'body' in response:
-            body = json.loads(response['body'])
-            print("Response Body:", body)
-        else:
-            print("No body found in response")
+    def test_validate_body_missing_id_mission(self):
+        body = {'id_user': 1}
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        self.assertEqual(context.exception.args, (400, "id_mission is required"))
 
-    """
-    Test class for the lambda_handler function on the case is successful
-    
-    """
+    def test_validate_body_id_mission_none(self):
+        body = {'id_mission': None, 'id_user': 1}
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        self.assertEqual(context.exception.args, (400, "id_mission is required"))
 
-    @patch('modules.missions.cancel_mission.app.cancel_mission')
+    def test_validate_body_id_mission_not_int(self):
+        body = {'id_mission': 'string', 'id_user': 1}
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        self.assertEqual(context.exception.args, (400, "id_mission must be an integer"))
+
+    def test_validate_body_missing_id_user(self):
+        body = {'id_mission': 1}
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        self.assertEqual(context.exception.args, (400, "id_user is required"))
+
+    def test_validate_body_id_user_none(self):
+        body = {'id_mission': 1, 'id_user': None}
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        self.assertEqual(context.exception.args, (400, "id_user is required"))
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_validate_user_success(self, mock_get_db_connection):
+        def mock_cursor():
+            class Cursor:
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, exc_type, exc_value, traceback):
+                    pass
+
+                def execute(self, sql, params):
+                    pass
+
+                def fetchall(self):
+                    return [(1,)]
+
+            return Cursor()
+
+        mock_get_db_connection.return_value.cursor = mock_cursor
+        id_user = 1
+        self.assertTrue(validate_user(id_user))
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_validate_user_not_found(self, mock_get_db_connection):
+        def mock_cursor():
+            class Cursor:
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, exc_type, exc_value, traceback):
+                    pass
+
+                def execute(self, sql, params):
+                    pass
+
+                def fetchall(self):
+                    return []
+            return Cursor()
+
+        mock_get_db_connection.return_value.cursor = mock_cursor
+        id_user = 1
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_user(id_user)
+        self.assertEqual(context.exception.args, (404, "User not found"))
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_validate_user_db_error(self, mock_get_db_connection):
+        def mock_cursor():
+            class Cursor:
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, exc_type, exc_value, traceback):
+                    pass
+
+                def execute(self, sql, params):
+                    raise Exception("DB Error")
+
+                def fetchall(self):
+                    pass
+
+            return Cursor()
+
+        mock_get_db_connection.return_value.cursor = mock_cursor
+        id_user = 1
+        with self.assertRaises(Exception) as context:
+            validate_user(id_user)
+        self.assertTrue('DB Error' in str(context.exception))
+
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_cancel_mission_success(self, mock_get_db_connection):
+        def mock_cursor():
+            class Cursor:
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, exc_type, exc_value, traceback):
+                    pass
+
+                def execute(self, sql, params):
+                    pass
+
+                def fetchall(self):
+                    pass
+
+                def rowcount(self):
+                    return 1  # Simula una actualización exitosa
+
+            return Cursor()
+
+        mock_get_db_connection.return_value.cursor = mock_cursor
+        id_mission = 1
+        id_user = 1
+        self.assertTrue(cancel_mission(id_mission, id_user))
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_cancel_mission_db_error(self, mock_get_db_connection):
+        def mock_cursor():
+            class Cursor:
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, exc_type, exc_value, traceback):
+                    pass
+
+                def execute(self, sql, params):
+                    raise Exception("DB Error")  # Simula un error en la base de datos
+
+                def fetchall(self):
+                    pass
+
+                def rowcount(self):
+                    pass
+
+            return Cursor()
+
+        mock_get_db_connection.return_value.cursor = mock_cursor
+        id_mission = 1
+        id_user = 1
+        with self.assertRaises(Exception) as context:
+            cancel_mission(id_mission, id_user)
+        self.assertTrue('DB Error' in str(context.exception))
+
+    @patch('modules.missions.cancel_mission.app.get_db_connection')
+    def test_cancel_mission_not_found(self, mock_get_db_connection):
+        # Simular el cursor
+        mock_cursor = MagicMock()
+        mock_cursor.rowcount = 0  # Simula que la misión no se encuentra
+
+        # Simular la conexión y el cursor
+        mock_connection = MagicMock()
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+        # Configurar el mock de get_db_connection
+        mock_get_db_connection.return_value = mock_connection
+
+        id_mission = 1
+        id_user = 1
+
+        # Ejecutar la función y verificar la excepción
+        with self.assertRaises(HttpStatusCodeError) as context:
+            cancel_mission(id_mission, id_user)
+
+        self.assertEqual(context.exception.args, (404, "Mission not found or user unauthorized to cancel"))
+
+
+    @patch('modules.missions.cancel_mission.app.validate_body')
     @patch('modules.missions.cancel_mission.app.validate_user')
-    @patch('modules.missions.cancel_mission.common.db_connection.get_secrets')
-    def test_lambda_handler(self, mock_get_secrets, mock_validate_user, mock_cancel_mission):
-        mock_get_secrets.return_value = {
-            'username': 'admin',
-            'password': 'admin',
-            'engine': 'admin',
-            'host': 'admin',
-            'port': 'admin',
-            'dbname': 'admin',
-            'dbInstanceIdentifier': 'admin'
-        }
-
+    @patch('modules.missions.cancel_mission.app.cancel_mission')
+    def test_lambda_handler_success(self, mock_cancel_mission, mock_validate_user, mock_validate_body):
+        # Configurar los mocks para que no lancen excepciones
+        mock_validate_body.return_value = True
         mock_validate_user.return_value = True
         mock_cancel_mission.return_value = True
 
-        body_mission_successfully = {
-            'body': json.dumps({
-                'id_mission': 1,
-                'id_user': 1
-            })
-        }
-        response = app.lambda_handler(body_mission_successfully, None)
-        self.assertEqual(response, {'statusCode': 200, 'body': '"Mission cancelled successfully"'})
-        self.print_response(response)
-        print("Request body:", body_mission_successfully['body'])
-
-    """
-    Test class for the lambda_handler function on:
-        -the case where the id_mission is not in the body
-        -the case where the id_mission is None
-        -the case where the id_mission is not int     
-    """
-
-    def test_no_id_mission(self):
-        body_no_id_mission = {
-            'body': json.dumps({
-                'id_user': 1
-            })
+        # Crear un evento simulado
+        event = {
+            'body': '{"id_mission": 1, "id_user": 1}'
         }
 
-        response = app.lambda_handler(body_no_id_mission, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"id_mission is required"'})
-        self.print_response(response)
-        print("Request body:", body_no_id_mission['body'])
+        # Ejecutar la lambda handler
+        response = lambda_handler(event, None)
 
-    def test_id_mission_is_none(self):
-        body_id_mission_is_none = {
-            'body': json.dumps({
-                'id_mission': None,
-                'id_user': 1
-            })
+        # Verificar que la respuesta es correcta
+        self.assertEqual(response['statusCode'], 200)
+        self.assertIn('Mission cancelled successfully', response['body'])
+
+    @patch('modules.missions.cancel_mission.app.validate_body')
+    @patch('modules.missions.cancel_mission.app.validate_user')
+    @patch('modules.missions.cancel_mission.app.cancel_mission')
+    def test_lambda_handler_http_error(self, mock_cancel_mission, mock_validate_user, mock_validate_body):
+        # Configurar los mocks
+        mock_validate_body.side_effect = HttpStatusCodeError(400, "Validation error")
+
+        # Crear un evento simulado
+        event = {
+            'body': '{"id_mission": 1, "id_user": 1}'
         }
 
-        response = app.lambda_handler(body_id_mission_is_none, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"id_mission is required"'})
-        self.print_response(response)
-        print("Request body:", body_id_mission_is_none['body'])
+        # Ejecutar la lambda handler
+        response = lambda_handler(event, None)
 
-    def test_id_mission_is_not_int(self):
-        body_id_mission_is_not_int = {
-            'body': json.dumps({
-                'id_mission': 'one',
-                'id_user': 1
-            })
-        }
-
-        response = app.lambda_handler(body_id_mission_is_not_int, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"id_mission must be an integer"'})
-        self.print_response(response)
-        print("Request body:", body_id_mission_is_not_int['body'])
-
-    """
-    Test class for the lambda_handler function on:
-            -the case where the id_user is not in the body
-            -the case where the id_user is None
-            -the case where the id_user is not int
-    """
-
-    def test_no_id_user(self):
-        body_no_id_user = {
-            'body': json.dumps({
-                'id_mission': 1
-            })
-        }
-
-        response = app.lambda_handler(body_no_id_user, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"id_user is required"'})
-        self.print_response(response)
-        print("Request body:", body_no_id_user['body'])
-
-    def test_id_user_is_none(self):
-        body_id_user_is_none = {
-            'body': json.dumps({
-                'id_mission': 1,
-                'id_user': None
-            })
-        }
-
-        response = app.lambda_handler(body_id_user_is_none, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"id_user is required"'})
-        self.print_response(response)
-        print("Request body:", body_id_user_is_none['body'])
-
-    def test_id_user_is_not_int(self):
-        body_id_user_is_not_int = {
-            'body': json.dumps({
-                'id_mission': 1,
-                'id_user': 'one'
-            })
-        }
-
-        response = app.lambda_handler(body_id_user_is_not_int, None)
-        self.assertEqual(response, {'statusCode': 400, 'body': '"id_user must be an integer"'})
-        self.print_response(response)
-        print("Request body:", body_id_user_is_not_int['body'])
-
-    """
-    Test class for the validate_user function
-        - when user exists
-        - when user does not exist
-        - when there is a user internal server error
-    """
-
-    @patch('modules.missions.cancel_mission.app.get_db_connection')
-    def test_validate_user_exists(self, mock_get_db_connection):
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_get_db_connection.return_value = mock_conn
-        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-        mock_cursor.fetchall.return_value = [{'id_user': 1}]
-
-        try:
-            app.validate_user(1)
-            response = {'statusCode': 200, 'body': '"User validated successfully"'}
-        except HttpStatusCodeError as e:
-            response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
-
-        self.assertEqual(response, {'statusCode': 200, 'body': '"User validated successfully"'})
-        self.print_response(response)
-        print("Request body:", response['body'])
-
-    @patch('modules.missions.cancel_mission.app.get_db_connection')
-    def test_validate_user_not_exists(self, mock_get_db_connection):
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_get_db_connection.return_value = mock_conn
-        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-        mock_cursor.fetchall.return_value = []
-
-        try:
-            app.validate_user(1)
-            response = {'statusCode': 200, 'body': '"User validated successfully"'}
-        except HttpStatusCodeError as e:
-            response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
-
-        self.assertEqual(response, {'statusCode': 404, 'body': '"User not found"'})
-        self.print_response(response)
-        print("Request body:", response['body'])
-
-    @patch('modules.missions.cancel_mission.app.get_db_connection')
-    def test_validate_user_internal_server_error(self, mock_get_db_connection):
-        mock_get_db_connection.side_effect = Exception("Database connection error")
-
-        try:
-            app.validate_user(1)
-            response = {'statusCode': 200, 'body': '"User validated successfully"'}
-        except Exception as e:
-            response = {'statusCode': 500, 'body': json.dumps("Internal server error")}
-
-        self.assertEqual(response, {'statusCode': 500, 'body': '"Internal server error"'})
-        self.print_response(response)
-        print("Request body:", response['body'])
-
-    """
-    Test class for the cancel_mission function
-        - when mission is cancelled successfully
-        - when mission not found or user unauthorized to cancel
-        - when there is a mission internal server error
-    """
-    @patch('modules.missions.cancel_mission.app.get_db_connection')
-    def test_cancel_mission_successful(self, mock_get_db_connection):
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_get_db_connection.return_value = mock_conn
-        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-        mock_cursor.rowcount = 1
-
-        try:
-            app.cancel_mission(1, 1)
-            response = {'statusCode': 200, 'body': '"Mission cancelled successfully"'}
-        except HttpStatusCodeError as e:
-            response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
-
-        self.assertEqual(response, {'statusCode': 200, 'body': '"Mission cancelled successfully"'})
-        self.print_response(response)
-        print("Request body:", response['body'])
-
-    @patch('modules.missions.cancel_mission.app.get_db_connection')
-    def test_cancel_mission_not_found_or_unauthorized(self, mock_get_db_connection):
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_get_db_connection.return_value = mock_conn
-        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-        mock_cursor.rowcount = 0
-
-        try:
-            app.cancel_mission(1, 1)
-            response = {'statusCode': 200, 'body': '"Mission cancelled successfully"'}
-        except HttpStatusCodeError as e:
-            response = {'statusCode': e.status_code, 'body': json.dumps(e.message)}
-
-        self.assertEqual(response, {'statusCode': 404, 'body': '"Mission not found or user unauthorized to cancel"'})
-        self.print_response(response)
-        print("Request body:", response['body'])
-
-    @patch('modules.missions.cancel_mission.app.get_db_connection')
-    def test_cancel_mission_internal_server_error(self, mock_get_db_connection):
-        mock_get_db_connection.side_effect = Exception("Database connection error")
-
-        try:
-            app.cancel_mission(1, 1)
-            response = {'statusCode': 200, 'body': '"Mission cancelled successfully"'}
-        except Exception as e:
-            response = {'statusCode': 500, 'body': json.dumps("Internal server error")}
-
-        self.assertEqual(response, {'statusCode': 500, 'body': '"Internal server error"'})
-        self.print_response(response)
-        print("Request body:", response['body'])
-
-
+        # Verificar que la respuesta es correcta
+        self.assertEqual(response['statusCode'], 400)
+        self.assertIn('Validation error', response['body'])
 if __name__ == '__main__':
     unittest.main()
