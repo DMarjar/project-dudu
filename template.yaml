@@ -240,6 +240,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /insert_mission
             Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   RecoverPasswordFunction:
     Type: AWS::Serverless::Function
@@ -274,6 +276,9 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /change_password/
             Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
+
   GetProfileFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -290,6 +295,8 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /get_profile
             Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   UpdateProfileFunction:
     Type: AWS::Serverless::Function
@@ -307,6 +314,8 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /update_profile
             Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   CompleteMissionFunction:
     Type: AWS::Serverless::Function
@@ -324,6 +333,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /complete_mission
             Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
 
 
   CancelMissionFunction:
@@ -342,6 +353,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /cancel_mission
             Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   SearchMissionFunction:
     Type: AWS::Serverless::Function
@@ -359,6 +372,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /search_mission
             Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   RegisterUserFunction:
     Type: AWS::Serverless::Function
@@ -427,6 +442,8 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /delete_user_profile
             Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   ExistUserFunction:
     Type: AWS::Serverless::Function
@@ -471,6 +488,11 @@ Resources:
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+            IdentitySource: method.request.header.Authorization
 
   UsersApi:
     Type: AWS::Serverless::Api
@@ -481,6 +503,11 @@ Resources:
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+            IdentitySource: method.request.header.Authorization
 
 Outputs:
   LambdaExecutionRoleArn:
