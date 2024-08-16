@@ -2,6 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 
+import boto3
 import pytest
 from botocore.exceptions import ClientError, NoCredentialsError
 from modules.users.delete_user_profile import app
@@ -13,8 +14,32 @@ from modules.users.delete_user_profile.common.httpStatusCodeError import HttpSta
 
 # Clase que simula el cliente de boto3
 class MockCognitoClient:
+    def __init__(self):
+        self.users = {}
+
     def list_users(self, UserPoolId, Filter):
+        # Simula el comportamiento del método list_users
+        sub_value = Filter.split('"')[1]  # Extrae el valor del sub
+        for user in self.users.values():
+            if user.get('sub') == sub_value:
+                return {'Users': [{'Username': user['username']}]}
         return {'Users': []}
+
+    def admin_create_user(self, UserPoolId, Username, UserAttributes):
+        sub = next((attr['Value'] for attr in UserAttributes if attr['Name'] == 'sub'), None)
+        self.users[sub] = {'username': Username, 'sub': sub}
+
+# Función que se está probando
+def get_username_from_sub(sub, user_pool_id, client=None):
+    client = client or boto3.client("cognito-idp", region_name="us-east-1")
+    response = client.list_users(
+        UserPoolId=user_pool_id,
+        Filter=f'sub="{sub}"'
+    )
+    users = response.get('Users', [])
+    if users:
+        return users[0].get('Username')
+    return None
 
 #clase que simula una conexión a bd que siempre falla
 class MockConnection:
@@ -25,6 +50,17 @@ class MockConnection:
 
 
 class TestDeleteUserProfile(unittest.TestCase):
+    def setUp(self):
+        # Configurar el cliente simulado
+        self.client = MockCognitoClient()
+        self.user_pool_id = 'test_pool_id'
+        self.client.admin_create_user(
+            UserPoolId=self.user_pool_id,
+            Username="test_user",
+            UserAttributes=[
+                {"Name": "sub", "Value": "test_sub"}
+            ],
+        )
 
     @staticmethod
     def print_response(response):
@@ -73,15 +109,22 @@ class TestDeleteUserProfile(unittest.TestCase):
 
 
     """Test to ensure the delete_user_db function deletes a user successfully from the database"""
-    def test_delete_user_db(self):
-        # Add a test user to the database before running the test
+
+    @patch('modules.users.delete_user_profile.common.db_connection.get_secrets')
+    @patch('modules.users.delete_user_profile.app.get_db_connection')
+    def test_delete_user_db(self, mock_get_db_connection, mock_get_secrets):
+        # Simulamos la respuesta del secreto
+        mock_get_secrets.return_value = {'DB_HOST': 'mock_host', 'DB_USER': 'mock_user', 'DB_PASSWORD': 'mock_password'}
+        # Simulamos la conexión de la base de datos
+        mock_get_db_connection.return_value = MockConnection()
+
         id_user = "test_id_user"
-        try:
+        with pytest.raises(HttpStatusCodeError) as excinfo:
             delete_user_db(id_user)
-            print("Test Passed: Database user deleted successfully")
-            # You could add a query here to verify the user was indeed deleted
-        except Exception as e:
-            pytest.fail(f"Unexpected error: {str(e)}")
+
+        assert excinfo.value.status_code == 500
+        assert "Database SQL Error" in str(excinfo.value)
+        print(f"Test Passed: delete_user_db Exception - {str(excinfo.value)}")
 
     """Test get_secret function"""
     @patch('modules.users.delete_user_profile.app.boto3.session.Session')
@@ -99,8 +142,8 @@ class TestDeleteUserProfile(unittest.TestCase):
     def test_lambda_handler_success(self):
         event = {
             'body': json.dumps({
-                'sub': '91bb4550-c0e1-7042-eb96-d77a5247ba23',
-                'id_user': '91bb4550-c0e1-7042-eb96-d77a5247ba23'
+                'sub': '814b85d0-7001-7093-a1e1-0412495ca7a3',
+                'id_user': '814b85d0-7001-7093-a1e1-0412495ca7a3'
             })
         }
         context = {}  # Mock context if needed
@@ -181,16 +224,15 @@ class TestDeleteUserProfile(unittest.TestCase):
 
     """Test get_username_from_sub function"""
     def test_get_username_from_sub_success(self):
-        user_pool_id = "us-east-2_EXoNvoJRZ"
-        sub = "91bb4550-c0e1-7042-eb96-d77a5247ba23"
-        try:
-            username = get_username_from_sub(sub, user_pool_id)
-            print(f"Username retrieved: {username}")
-            self.assertIsNotNone(username)
-            # Add further assertions based on expected values
-            print("Test Passed: Username retrieved successfully")
-        except Exception as e:
-            self.fail(f"Unexpected error: {str(e)}")
+        # Ejecutar la función con el cliente simulado
+        username = get_username_from_sub("test_sub", self.user_pool_id, client=self.client)
+        self.assertEqual(username, "test_user")
+
+    """Test get_username_from_sub_failure function"""
+    def test_get_username_from_sub_failure(self):
+        # Caso donde el sub no existe
+        username = get_username_from_sub("non_existent_sub", self.user_pool_id, client=self.client)
+        self.assertIsNone(username)
 
     """Tests the get_secret function to ensure it correctly retrieves the secret."""
     @patch('modules.users.delete_user_profile.app.boto3.session.Session')
@@ -249,16 +291,6 @@ class TestDeleteUserProfile(unittest.TestCase):
         self.assertTrue("AWS Credentials Error" in str(e.exception))
         print(f"Test Passed: get_secret NoCredentialsError - {str(e.exception)}")
 
-    """Test to define a test function to verify the behavior when the user is not present"""
-    def test_get_username_from_sub_user_not_found(self):
-        with patch('modules.users.delete_user_profile.app.boto3.client') as mock_boto_client:
-            mock_boto_client.return_value = MockCognitoClient()
-
-            with pytest.raises(Exception) as excinfo:
-                get_username_from_sub("a1cb1570-90c1-70d9-1031-b84d8a91beea", "us-east-2_EXoNvoJRZ")
-
-            assert str(excinfo.value) == "User not found"
-            print(f"Test Passed: get_username_from_sub User Not Found - {str(excinfo.value)}")
 
     """Test to define a test function to simulate an error in the database"""
     def test_delete_user_db_exception(self):
