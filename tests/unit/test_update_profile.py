@@ -4,7 +4,8 @@ import json
 
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from modules.profile.update_profile.app import lambda_handler, validate_body, get_secret, get_username_from_sub
+from modules.profile.update_profile.app import lambda_handler, validate_body, get_secret, get_username_from_sub, \
+    update_cognito_user
 from modules.profile.update_profile.common.httpStatusCodeError import HttpStatusCodeError
 
 
@@ -323,7 +324,6 @@ class TestLambdaHandler(unittest.TestCase):
         }
         with self.assertRaises(HttpStatusCodeError) as context:
             validate_body(body)
-        # Verifica el código de estado y el mensaje
         self.assertEqual(context.exception.status_code, 400)
         self.assertEqual(context.exception.message, "id_user is required and must be a non-empty string")
 
@@ -335,7 +335,6 @@ class TestLambdaHandler(unittest.TestCase):
         }
         with self.assertRaises(HttpStatusCodeError) as context:
             validate_body(body)
-        # Verifica el código de estado y el mensaje
         self.assertEqual(context.exception.status_code, 400)
         self.assertEqual(context.exception.message, "email is required")
 
@@ -348,13 +347,10 @@ class TestLambdaHandler(unittest.TestCase):
         mock_client.list_users.return_value = {
             'Users': [{'Username': 'test_username'}]
         }
-
-        # Llamada a la función con datos simulados
         sub = 'fake_sub'
         user_pool_id = 'fake_user_pool_id'
         username = get_username_from_sub(sub, user_pool_id)
 
-        # Verificaciones
         self.assertEqual(username, 'test_username')
         mock_client.list_users.assert_called_once_with(
             UserPoolId=user_pool_id,
@@ -363,26 +359,58 @@ class TestLambdaHandler(unittest.TestCase):
 
     @patch('modules.profile.update_profile.app.boto3.client')
     def test_get_username_from_sub_user_not_found(self, mock_boto_client):
-        # Configuración del mock
         mock_client = MagicMock()
         mock_boto_client.return_value = mock_client
         mock_client.list_users.return_value = {
             'Users': []
         }
-
-        # Llamada a la función con datos simulados
         sub = 'fake_sub'
         user_pool_id = 'fake_user_pool_id'
-
         with self.assertRaises(Exception) as context:
             get_username_from_sub(sub, user_pool_id)
-
-        # Verificaciones
         self.assertEqual(str(context.exception), "User not found")
         mock_client.list_users.assert_called_once_with(
             UserPoolId=user_pool_id,
             Filter=f'sub="{sub}"'
         )
+
+    @patch('modules.profile.update_profile.app.boto3.client')
+    @patch('modules.profile.update_profile.app.get_username_from_sub')
+    def test_update_cognito_user_success(self, mock_get_username_from_sub, mock_boto_client):
+        mock_client = MagicMock()
+        mock_boto_client.return_value = mock_client
+        mock_get_username_from_sub.return_value = 'test_username'
+        mock_client.admin_update_user_attributes.return_value = {}
+
+        sub = 'fake_sub'
+        body = {'email': 'test@example.com'}
+        secrets = {'USER_POOL_ID': 'fake_user_pool_id'}
+        update_cognito_user(sub, body, secrets)
+
+    @patch('modules.profile.update_profile.app.boto3.client')
+    @patch('modules.profile.update_profile.app.get_username_from_sub')
+    def test_update_cognito_user_user_not_found(self, mock_get_username_from_sub, mock_boto_client):
+        mock_client = MagicMock()
+        mock_boto_client.return_value = mock_client
+        mock_get_username_from_sub.return_value = 'test_username'
+
+        # Configura el mock para lanzar ClientError con UserNotFoundException
+        mock_client.admin_update_user_attributes.side_effect = ClientError(
+            {"Error": {"Code": "UserNotFoundException", "Message": "User not found"}},
+            "AdminUpdateUserAttributes"
+        )
+
+        sub = 'fake_sub'
+        body = {'email': 'test@example.com'}
+        secrets = {'USER_POOL_ID': 'fake_user_pool_id'}
+
+        with self.assertRaises(HttpStatusCodeError) as context:
+            update_cognito_user(sub, body, secrets)
+
+        self.assertEqual(context.exception.args, (404, "User not found in Cognito"))
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
