@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 from modules.users.set_password import app
 from unittest import TestCase
+import boto3
 
 EVENT = {
     'body': json.dumps({
@@ -12,9 +13,57 @@ EVENT = {
     })
 }
 
+FAKE_SECRET = {'SecretString': json.dumps({
+            'SECRET_CLIENT': 'client',
+            'ID_CLIENT': 'id',
+            'USER_POOL_ID': 'pool'
+        })}
+
+
+# To test_lambda_handler
+class FakeSessionTestLambdaHandler:
+    """
+    FakeSession class to mock boto3 session
+    """
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def client(self, *args, **kwargs):
+        return FakeBoto3ClientTestLambdaHandler()
+class FakeBoto3ClientTestLambdaHandler:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def get_secret_value(self, *args, **kwargs):
+        return FAKE_SECRET
+
+    def admin_initiate_auth(self, *args, **kwargs):
+        return {'ChallengeName': 'NEW_PASSWORD_REQUIRED', 'Session': 'session'}
+
+    def respond_to_auth_challenge(self, *args, **kwargs):
+        return MagicMock()
+
+    def admin_update_user_attributes(self, *args, **kwargs):
+        return MagicMock()
+
+    def initiate_auth(self, *args, **kwargs):
+        return {'AuthenticationResult': {
+            'IdToken': 'id_token',
+            'AccessToken': 'access_token',
+            'RefreshToken': 'refresh_token'
+        }}
+
+
+
+
 
 class Test(TestCase):
-    def test_lambda_handler(self):
+    @patch('boto3.client')
+    @patch('boto3.session.Session')
+    def test_lambda_handler(self, mock_session, mock_client):
+        mock_session.return_value = FakeSessionTestLambdaHandler()
+        mock_client.return_value = FakeBoto3ClientTestLambdaHandler()
+
         response = app.lambda_handler(EVENT, None)
 
         body = json.loads(response['body'])
