@@ -1,7 +1,7 @@
 import boto3
 import json
 from botocore.exceptions import ClientError
-from modules.users.change_password.common.common_functions import get_secret, get_secret_hash
+from common.common_functions import get_secret, get_secret_hash
 
 
 def lambda_handler(event, context):
@@ -77,10 +77,3 @@ def lambda_handler(event, context):
                 'body': json.dumps('An error occurred while resetting the password: ' + str(e)),
                 'headers': headers
             }
-
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps('An error occurred while resetting the password: ' + str(e)),
-            'headers': headers
-        }

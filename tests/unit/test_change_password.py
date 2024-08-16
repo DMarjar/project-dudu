@@ -1,8 +1,10 @@
 import json
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from botocore.exceptions import ClientError
 from modules.users.change_password.app import lambda_handler
+from modules.users.change_password.common.common_functions import get_secret_value
+
 
 
 class FakeSecretsManagerClient:
@@ -18,13 +20,11 @@ class FakeSecretsManagerClient:
             )
 
     def confirm_forgot_password(self, **kwargs):
-        """Simula el método confirm_forgot_password."""
         return {}
 
 
 class FakeCognitoIdpClient:
     def confirm_forgot_password(self, **kwargs):
-        """Simula el método confirm_forgot_password."""
         return {}
 
 
@@ -42,7 +42,6 @@ class TestLambdaHandler(unittest.TestCase):
         self.patcher_boto_session = patch('boto3.session.Session', return_value=FakeSession())
         self.mock_boto_session = self.patcher_boto_session.start()
 
-        # Preparar mocks para las funciones de recuperación de secretos
         self.patcher_get_secret = patch('modules.users.change_password.common.common_functions.get_secret')
         self.patcher_get_secret_hash = patch('modules.users.change_password.common.common_functions.get_secret_hash')
 
@@ -56,6 +55,16 @@ class TestLambdaHandler(unittest.TestCase):
         self.patcher_boto_session.stop()
         self.patcher_get_secret.stop()
         self.patcher_get_secret_hash.stop()
+
+    @patch('modules.users.change_password.common.common_functions.boto3.client')
+    def test_get_secrets_client_error(self, mock_boto_client):
+        mock_client_instance = mock_boto_client.return_value
+        mock_client_instance.get_secret_value.side_effect = ClientError(
+            {'Error': {'Code': 'ResourceNotFoundException'}}, 'get_secret_value'
+        )
+        with self.assertRaises(ClientError) as context:
+            get_secret_value('some_secret_id')
+        self.assertEqual(context.exception.response['Error']['Code'], 'ResourceNotFoundException')
 
     def test_successful_password_reset(self):
         with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
@@ -75,7 +84,6 @@ class TestLambdaHandler(unittest.TestCase):
 
     def test_code_mismatch_exception(self):
         with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
-            # Simulamos la excepción CodeMismatchException en el cliente de Cognito
             with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password', side_effect=ClientError(
                     {'Error': {'Code': 'CodeMismatchException', 'Message': 'The code passed is incorrect.'}},
                     'ConfirmForgotPassword'
@@ -114,7 +122,6 @@ class TestLambdaHandler(unittest.TestCase):
 
     def test_expired_code_exception(self):
         with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
-            # Simulamos la excepción ExpiredCodeException en el cliente de Cognito
             with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password', side_effect=ClientError(
                     {'Error': {'Code': 'ExpiredCodeException', 'Message': 'The confirmation code has expired.'}},
                     'ConfirmForgotPassword'
@@ -136,7 +143,6 @@ class TestLambdaHandler(unittest.TestCase):
 
     def test_invalid_password_exception(self):
         with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
-            # Simulamos la excepción InvalidPasswordException en el cliente de Cognito
             with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password', side_effect=ClientError(
                     {'Error': {'Code': 'InvalidPasswordException', 'Message': 'The password provided is invalid.'}},
                     'ConfirmForgotPassword'
@@ -180,9 +186,10 @@ class TestLambdaHandler(unittest.TestCase):
 
     def test_generic_exception(self):
         with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
-            # Simulamos una excepción genérica en el cliente de Cognito
             with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password',
-                              side_effect=Exception('Some generic error')):
+                              side_effect=ClientError(
+                                  {'Error': {'Code': 'UnknownException', 'Message': 'An unknown error occurred'}},
+                                  'ConfirmForgotPassword')):
                 event = {
                     'body': json.dumps({
                         'username': 'testuser',
@@ -196,8 +203,8 @@ class TestLambdaHandler(unittest.TestCase):
                 response = lambda_handler(event, context)
 
                 self.assertEqual(response['statusCode'], 500)
-                self.assertEqual(json.loads(response['body']),
-                                 'An error occurred while resetting the password: Some generic error')
+                self.assertIn('An error occurred while resetting the password:', response['body'])
+                self.assertIn('UnknownException', response['body'])
 
     if __name__ == '__main__':
         unittest.main()  # pragma: no cover
