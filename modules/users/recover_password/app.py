@@ -16,7 +16,7 @@ def lambda_handler(event, context):
     body = json.loads(event['body'])
     username = body['username']
 
-    client_id = secrets['ID_CLIENT']
+    client_id = "739rrbctbufv3tbr652n35kjfn"
     client_secret = secrets['SECRET_CLIENT']
 
     try:
