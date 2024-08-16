@@ -14,10 +14,10 @@ EVENT = {
 }
 
 FAKE_SECRET = {'SecretString': json.dumps({
-            'SECRET_CLIENT': 'client',
-            'ID_CLIENT': 'id',
-            'USER_POOL_ID': 'pool'
-        })}
+    'SECRET_CLIENT': 'client',
+    'ID_CLIENT': 'id',
+    'USER_POOL_ID': 'pool'
+})}
 
 
 # To test_lambda_handler
@@ -25,11 +25,14 @@ class FakeSessionTestLambdaHandler:
     """
     FakeSession class to mock boto3 session
     """
+
     def __init__(self, *args, **kwargs):
         pass
 
     def client(self, *args, **kwargs):
         return FakeBoto3ClientTestLambdaHandler()
+
+
 class FakeBoto3ClientTestLambdaHandler:
     def __init__(self, *args, **kwargs):
         pass
@@ -52,9 +55,6 @@ class FakeBoto3ClientTestLambdaHandler:
             'AccessToken': 'access_token',
             'RefreshToken': 'refresh_token'
         }}
-
-
-
 
 
 class Test(TestCase):
