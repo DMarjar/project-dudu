@@ -1,6 +1,4 @@
 import json
-import unittest
-from unittest.mock import patch, MagicMock
 from modules.users.recover_password import app
 from unittest import TestCase
 

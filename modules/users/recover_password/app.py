@@ -8,7 +8,6 @@ from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
-    global client_id
     headers = {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
@@ -45,7 +44,7 @@ def lambda_handler(event, ___):
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': json.dumps('An error occurred: ' + str(e) + client_id),
+            'body': json.dumps('An error occurred: ' + str(e)),
             'headers': headers
         }
 
