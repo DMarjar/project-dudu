@@ -6,8 +6,8 @@ import random
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from .common.httpStatusCodeError import HttpStatusCodeError
-from .common.db_connection import get_db_connection
+from common.httpStatusCodeError import HttpStatusCodeError
+from common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
@@ -34,13 +34,33 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
-            'body': json.dumps("User registered successfully")
+            'body': json.dumps("User registered successfully"),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
         }
 
+    except HttpStatusCodeError as e:
+        response = {
+            'statusCode': e.status_code,
+            'body': json.dumps(e.message),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
+        }
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps(f"An error occurred while getting the missions: {str(e)} - {event}")
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
+            'body': json.dumps("An unexpected error occurred: " + str(e)),
         }
 
     return response
@@ -109,7 +129,7 @@ def generate_temporary_password(length=12):
 
 
 def get_secret():
-    secret_name = "users_pool/client_secret"
+    secret_name = "users_pool/client_secret2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()

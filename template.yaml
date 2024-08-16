@@ -9,8 +9,98 @@ Globals:
   Function:
     Timeout: 120
     MemorySize: 256
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+
 
 Resources:
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow access to RDS
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: dududb2
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: MySQL
+      MasterUsername: admin
+      MasterUserPassword: admin123
+      VPCSecurityGroups:
+        - !GetAtt DBSecurityGroup.GroupId
+      PubliclyAccessible: true
+      MultiAZ: false
+
+  # Creación de secretos en Secrets Manager
+  DBConnectionSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: dudu/db/connection2
+      Description: "Connection details for dududb2"
+
+  OpenAISecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: secret/openai/key2
+      Description: "OpenAI API key"
+
+  UserPoolClientSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: users_pool/client_secret2
+      Description: "Client secret for user pool"
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: dudu-bucket2
+      VersioningConfiguration:
+        Status: Enabled
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: duduUserPool
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: true
+          Mutable: true
+
+    # Definición del grupo de usuarios en Cognito
+  UserGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: duduUsersGroup
+      UserPoolId: !Ref UserPool
+      Description: "Grupo de usuarios de dudu"
+      Precedence: 1
+
+    # Cliente para el User Pool
+  UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: duduUserPoolClient
+        UserPoolId: !Ref UserPool
+        GenerateSecret: true
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/dudu-log-group
+      RetentionInDays: 14
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -32,24 +122,90 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
                 Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeInstances
+                  - ec2:AttachNetworkInterface
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeSecurityGroups
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - rds:DescribeDBInstances
+                  - rds:CreateDBInstance
+                  - rds:DeleteDBInstance
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                  - secretsmanager:ListSecrets
+                  - secretsmanager:PutSecretValue
+                Resource: arn:aws:secretsmanager:*:*:secret:*
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                  - lambda:CreateFunction
+                  - lambda:DeleteFunction
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:GetFunction
+                Resource: arn:aws:lambda:*:*:function:*
+              - Effect: Allow
+                Action:
+                  - apigateway:GET
+                  - apigateway:POST
+                  - apigateway:PUT
+                  - apigateway:DELETE
+                Resource: arn:aws:apigateway:*::/restapis/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:StartInstances
+                  - ec2:StopInstances
+                  - ec2:RebootInstances
+                  - ec2:TerminateInstances
+                Resource: arn:aws:ec2:*:*:instance/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeVpcs
+                  - ec2:CreateVpc
+                  - ec2:DeleteVpc
+                Resource: arn:aws:ec2:*:*:vpc/*
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeSecurityGroups
+                  - ec2:AuthorizeSecurityGroupIngress
+                  - ec2:RevokeSecurityGroupIngress
+                  - ec2:AuthorizeSecurityGroupEgress
+                  - ec2:RevokeSecurityGroupEgress
+                Resource: arn:aws:ec2:*:*:security-group/*
+              - Effect: Allow
+                Action:
+                  - cognito-idp:ListUsers
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminDeleteUser
+                  - cognito-idp:AdminUpdateUserAttributes
+                  - cognito-idp:AdminGetUser
+                  - cognito-idp:AdminInitiateAuth
+                  - cognito-idp:AdminRespondToAuthChallenge
+                  - cognito-idp:AdminSetUserPassword
+                  - cognito-idp:AdminConfirmSignUp
+                  - cognito-idp:AdminDisableUser
+                  - cognito-idp:AdminEnableUser
+                  - cognito-idp:AdminResetUserPassword
+                  - cognito-idp:AdminUpdateAuthEventFeedback
+                  - cognito-idp:AdminUserGlobalSignOut
+                  - cognito-idp:AdminLinkProviderForUser
+                  - cognito-idp:AdminForgetDevice
+                  - cognito-idp:AdminListDevices
+                Resource: arn:aws:cognito-idp:*:*:userpool/*
 
-  GetAllMissionsFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: modules/missions/get_all_missions/
-      Handler: app.lambda_handler
-      Runtime: python3.12
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Architectures:
-        - x86_64
-      Events:
-        GetAllMissions:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MissionApi
-            Path: /get_all_missions
-            Method: get
 
   MissionExpirationFunction:
     Type: AWS::Serverless::Function
@@ -84,23 +240,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /insert_mission
             Method: post
-
-  GetOneMissionFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: modules/missions/get_one_mission/
-      Handler: app.lambda_handler
-      Runtime: python3.12
-      Role: !GetAtt LambdaExecutionRole.Arn
-      Architectures:
-        - x86_64
-      Events:
-        GetOneMission:
-          Type: Api
-          Properties:
-            RestApiId: !Ref MissionApi
-            Path: /get_one_mission/{id_mission}
-            Method: get
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   RecoverPasswordFunction:
     Type: AWS::Serverless::Function
@@ -135,6 +276,9 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /change_password/
             Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
+
   GetProfileFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -150,7 +294,9 @@ Resources:
           Properties:
             RestApiId: !Ref UsersApi
             Path: /get_profile
-            Method: get
+            Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   UpdateProfileFunction:
     Type: AWS::Serverless::Function
@@ -168,6 +314,8 @@ Resources:
             RestApiId: !Ref UsersApi
             Path: /update_profile
             Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   CompleteMissionFunction:
     Type: AWS::Serverless::Function
@@ -185,6 +333,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /complete_mission
             Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
 
 
   CancelMissionFunction:
@@ -203,6 +353,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /cancel_mission
             Method: put
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   SearchMissionFunction:
     Type: AWS::Serverless::Function
@@ -220,6 +372,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /search_mission
             Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
 
   RegisterUserFunction:
     Type: AWS::Serverless::Function
@@ -236,6 +390,23 @@ Resources:
           Properties:
             RestApiId: !Ref UsersApi
             Path: /register_user
+            Method: post
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/login/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        RegisterUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /login
             Method: post
 
   SetPasswordFunction:
@@ -270,34 +441,95 @@ Resources:
           Properties:
             RestApiId: !Ref UsersApi
             Path: /delete_user_profile
-            Method: delete
+            Method: post
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+  ExistUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/exist_user/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        ExistUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /exist_user
+            Method: post
+
+  RegisterAlexaUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/register_alexa_user/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        RegisterAlexaUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Path: /register_alexa_user
+            Method: post
 
   MissionApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: MissionApi
       StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+            IdentitySource: method.request.header.Authorization
 
   UsersApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: UsersApi
       StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+            IdentitySource: method.request.header.Authorization
 
 Outputs:
   LambdaExecutionRoleArn:
     Description: "Implicit IAM Role created for Lambda function"
     Value: !GetAtt LambdaExecutionRole.Arn
 
-  GetAllMissionsApiUrl:
-    Description: "API Gateway endpoint URL for Prod stage for Get All Missions function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_all_missions/"
+  MyRDSInstanceSecret:
+    Description: "Secret for the RDS instance"
+    Value: !Ref DBConnectionSecret
+  OpenAISecret:
+    Description: "Secret for OpenAI"
+    Value: !Ref OpenAISecret
+  UserPoolClientSecret:
+    Description: "Secret for User Pool"
+    Value: !Ref UserPoolClientSecret
+  S3Bucket:
+    Description: "S3 Bucket"
+    Value: !Ref S3Bucket
+
   MissionExpirationApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Mission Expiration function"
     Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mission_expiration/"
-  GetOneMissionApiUrl:
-    Description: "API Gateway endpoint URL for Prod stage for Get One Mission function"
-    Value: !Sub "https://${MissionApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_one_mission/{id_mission}"
   GetProfileApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Get Profile function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_profile/"
@@ -328,24 +560,27 @@ Outputs:
   SetPasswordApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Set Password function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/set_password/"
-
+  LoginApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Login function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/login/"
   DeleteUserProfileApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Delete User Profile function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/delete_user_profile/"
+  ExistUserApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Exist User function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/exist_user/"
+  RegisterAlexaUserApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Register Alexa User function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_alexa_user/"
 
 
-  GetAllMissionsFunctionArn:
-    Description: "Get All Missions Lambda Function ARN"
-    Value: !GetAtt GetAllMissionsFunction.Arn
+
   MissionExpirationFunctionArn:
     Description: "Expires Missions Lambda Function ARN"
     Value: !GetAtt MissionExpirationFunction.Arn
   InsertMissionFunctionArn:
     Description: "Insert Mission Lambda Function ARN"
     Value: !GetAtt InsertMissionFunction.Arn
-  GetOneMissionFunctionArn:
-    Description: "Get One Mission Lambda Function ARN"
-    Value: !GetAtt GetOneMissionFunction.Arn
   RecoverPasswordFunctionArn:
     Description: "Recover Password Lambda Function ARN"
     Value: !GetAtt RecoverPasswordFunction.Arn
@@ -367,15 +602,21 @@ Outputs:
   SearchMissionFunctionArn:
     Description: "Search Mission Lambda Function ARN"
     Value: !GetAtt SearchMissionFunction.Arn
-
-
   RegisterUserFunctionArn:
     Description: "Register User Lambda Function ARN"
     Value: !GetAtt RegisterUserFunction.Arn
   SetPasswordFunctionArn:
     Description: "Set Password Lambda Function ARN"
     Value: !GetAtt SetPasswordFunction.Arn
-
+  LoginFunctionArn:
+    Description: "Login Lambda Function ARN"
+    Value: !GetAtt LoginFunction.Arn
+  ExistUserFunctionArn:
+    Description: "Exist User Lambda Function ARN"
+    Value: !GetAtt ExistUserFunction.Arn
   DeleteUserProfileFunctionArn:
     Description: "Delete User Profile Lambda Function ARN"
     Value: !GetAtt DeleteUserProfileFunction.Arn
+  RegisterAlexaUserFunctionArn:
+    Description: "Register Alexa User Lambda Function ARN"
+    Value: !GetAtt RegisterAlexaUserFunction.Arn

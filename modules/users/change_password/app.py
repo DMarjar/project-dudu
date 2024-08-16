@@ -1,24 +1,32 @@
 import boto3
 import json
+from botocore.exceptions import ClientError
 from common.common_functions import get_secret, get_secret_hash
 
 
 def lambda_handler(event, context):
-    client = boto3.client('cognito-idp')
-    secret = get_secret()
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST'
+    }
 
+    client = boto3.client('cognito-idp')
+    secrets = get_secret()
     body = json.loads(event['body'])
     username = body['username']
     confirmation_code = body['confirmation_code']
     new_password = body['new_password']
     confirm_new_password = body['confirm_new_password']
-    client_id = '4iid9n3o306aorf0imcs0dcplo'
-    client_secret = secret['SECRET_CLIENT']
+
+    client_id = secrets['ID_CLIENT']
+    client_secret = secrets['SECRET_CLIENT']
 
     if new_password != confirm_new_password:
         return {
             'statusCode': 400,
-            'body': json.dumps('New password and confirmation password do not match.')
+            'body': json.dumps('New password and confirmation password do not match.'),
+            'headers': headers
         }
 
     try:
@@ -31,32 +39,42 @@ def lambda_handler(event, context):
             Password=new_password,
             SecretHash=secret_hash
         )
+
         return {
             'statusCode': 200,
-            'body': json.dumps('Password has been reset successfully.')
+            'body': json.dumps('Password has been reset successfully.'),
+            'headers': headers
         }
-    except client.exceptions.CodeMismatchException:
-        return {
-            'statusCode': 400,
-            'body': json.dumps('Invalid confirmation code.')
-        }
-    except client.exceptions.ExpiredCodeException:
-        return {
-            'statusCode': 400,
-            'body': json.dumps('Confirmation code has expired.')
-        }
-    except client.exceptions.InvalidPasswordException as e:
-        return {
-            'statusCode': 400,
-            'body': json.dumps(f'Invalid password: {str(e)}')
-        }
-    except client.exceptions.UserNotFoundException:
-        return {
-            'statusCode': 404,
-            'body': json.dumps('User not found.')
-        }
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps('An error occurred while resetting the password: ' + str(e))
-        }
+
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'CodeMismatchException':
+            return {
+                'statusCode': 400,
+                'body': json.dumps('Invalid confirmation code.'),
+                'headers': headers
+            }
+        elif error_code == 'ExpiredCodeException':
+            return {
+                'statusCode': 400,
+                'body': json.dumps('Confirmation code has expired.'),
+                'headers': headers
+            }
+        elif error_code == 'InvalidPasswordException':
+            return {
+                'statusCode': 400,
+                'body': json.dumps('Invalid password.'),
+                'headers': headers
+            }
+        elif error_code == 'UserNotFoundException':
+            return {
+                'statusCode': 404,
+                'body': json.dumps('User not found.'),
+                'headers': headers
+            }
+        else:
+            return {
+                'statusCode': 500,
+                'body': json.dumps('An error occurred while resetting the password: ' + str(e)),
+                'headers': headers
+            }

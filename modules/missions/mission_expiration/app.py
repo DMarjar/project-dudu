@@ -1,7 +1,7 @@
 import json
 import datetime
 from pymysql.cursors import DictCursor
-from common.db_connection import get_db_connection
+from .common.db_connection import get_db_connection
 from datetime import datetime
 
 

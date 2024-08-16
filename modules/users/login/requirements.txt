@@ -1,3 +1,4 @@
 requests
-pymysql
-
+mysql
+boto3
+botocore

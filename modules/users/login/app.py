@@ -9,6 +9,13 @@ from .common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):
+
+    headers = {
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+    }
+
     try:
         body = json.loads(event['body'])
         validate_body(body)
@@ -35,6 +42,7 @@ def lambda_handler(event, ___):
 
         response = {
             'statusCode': 200,
+            'headers': headers,
             'body': json.dumps({
                 'id_token': tokens['AuthenticationResult']['IdToken'],
                 'access_token': tokens['AuthenticationResult']['AccessToken'],
@@ -46,13 +54,15 @@ def lambda_handler(event, ___):
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
+            'headers': headers,
             'body': json.dumps(e.message)
         }
 
     except Exception as e:
         response = {
-            'statusCode': 500,
-            'body': json.dumps('Internal server error')
+            'statusCode': 401,
+            'headers': headers,
+            'body': json.dumps('User or password incorrect')
 
         }
 
@@ -72,8 +82,6 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "Username is required")
     if not body['username']:
         raise HttpStatusCodeError(400, "Username is required")
-    if body['username'] is None:
-        raise HttpStatusCodeError(400, "Username is required")
     if not isinstance(body['username'], str):
         raise HttpStatusCodeError(400, "Username must be a string")
 
@@ -82,8 +90,6 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "Password is required")
     if not body['password']:
         raise HttpStatusCodeError(400, "Password is required")
-    if body['password'] is None:
-        raise HttpStatusCodeError(400, "Password is required")
     if not isinstance(body['password'], str):
         raise HttpStatusCodeError(400, "Password must be a string")
 
@@ -91,7 +97,7 @@ def validate_body(body):
 
 
 def get_secret():
-    secret_name = "users_pool/client_secret"
+    secret_name = "users_pool/client_secret2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()
@@ -117,27 +123,18 @@ def verify_user(username, secrets):
     client = boto3.client('cognito-idp', region_name='us-east-2')
     user_pool_id = secrets['USER_POOL_ID']
 
-    try:
-        user = client.admin_get_user(
-            UserPoolId=user_pool_id,
-            Username=username
-        )
+    user = client.admin_get_user(
+        UserPoolId=user_pool_id,
+        Username=username
+    )
 
-        email_verified = user['UserAttributes'][1]['Value']
-        user_status = user['UserStatus']
+    email_verified = user['UserAttributes'][1]['Value']
+    user_status = user['UserStatus']
 
-        if not email_verified or email_verified is None:
-            raise HttpStatusCodeError(401, "User or password incorrect")
-        if not user_status or user_status is None:
-            raise HttpStatusCodeError(401, "User or password incorrect")
-
-        if str.lower(email_verified) != 'true':
-            raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
-        if user_status != 'CONFIRMED':
-            raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
-
-    except Exception:
-        raise HttpStatusCodeError(404, "User not found")
+    if str.lower(email_verified) != 'true':
+        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
+    if user_status != 'CONFIRMED':
+        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
 
     return True
 

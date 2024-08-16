@@ -5,7 +5,7 @@ import json
 import re
 import boto3
 
-from .common.httpStatusCodeError import HttpStatusCodeError
+from common.httpStatusCodeError import HttpStatusCodeError
 from botocore.exceptions import ClientError, NoCredentialsError
 
 
@@ -18,17 +18,32 @@ def lambda_handler(event, context):
 
         response = set_password(body, secrets)
 
+        response['headers'] = {
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST'
+        }
+
     except HttpStatusCodeError as e:
         response = {
             'statusCode': e.status_code,
-            'body': json.dumps(e.message)
+            'body': json.dumps(e.message),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     except Exception as e:
         response = {
             'statusCode': 500,
-            'body': json.dumps('Internal server error')
-
+            'body': json.dumps(str(e)),
+            'headers': {
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            }
         }
 
     return response
@@ -48,8 +63,6 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "Password is required")
     if not body['password']:
         raise HttpStatusCodeError(400, "Password is required")
-    if body['password'] is None:
-        raise HttpStatusCodeError(400, "Password is required")
     if not isinstance(body['password'], str):
         raise HttpStatusCodeError(400, "Password must be a string")
 
@@ -57,8 +70,6 @@ def validate_body(body):
     if 'username' not in body:
         raise HttpStatusCodeError(400, "Username is required")
     if not body['username']:
-        raise HttpStatusCodeError(400, "Username is required")
-    if body['username'] is None:
         raise HttpStatusCodeError(400, "Username is required")
     if not isinstance(body['username'], str):
         raise HttpStatusCodeError(400, "Username must be a string")
@@ -68,11 +79,9 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "New password is required")
     if not body['new_password']:
         raise HttpStatusCodeError(400, "New password is required")
-    if body['new_password'] is None:
-        raise HttpStatusCodeError(400, "New password is required")
     if not isinstance(body['new_password'], str):
         raise HttpStatusCodeError(400, "New password must be a string")
-    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', body['new_password']):
+    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#_])[A-Za-z\d@$!%*?&#_]{8,}$', body['new_password']):
         raise HttpStatusCodeError(400, "New password must contain at least 8 characters, one uppercase, one lowercase, "
                                        "one number and one special character")
 
@@ -80,7 +89,7 @@ def validate_body(body):
 
 
 def get_secret():
-    secret_name = "users_pool/client_secret"
+    secret_name = "users_pool/client_secret2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()
@@ -171,9 +180,8 @@ def set_password(body, secrets):
                 })
             }
 
-
     except Exception as e:
-        raise HttpStatusCodeError(500, "Error creating cognito client")
+        raise HttpStatusCodeError(500, str(e))
 
 
 def get_secret_hash(username, client_id, client_secret):

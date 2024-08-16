@@ -11,81 +11,127 @@ on:
 
 
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.12'
+
+      - name: Install dependencies for all modules
+        run: |
+          for dir in modules/**/; do
+            if [ -f "${dir}/requirements.txt" ]; then
+              pip install -r "${dir}/requirements.txt"
+            fi
+          done
+
+      - name: Give execution permission to modify_imports.sh
+        run: chmod +x ./modify_imports.sh
+
+      - name: Modify imports for testing
+        run: ./modify_imports.sh test
+
+      - name: Install dependencies to test
+        run: |
+          python -m pip install --upgrade pip
+          pip install coverage
+          pip install -r tests/requirements.txt
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m unittest discover -v -s tests/unit
+          coverage xml -o coverage-reports/coverage-python.xml
+          coverage report -m
+
+      - name: Store coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage-reports/coverage-python.xml
+
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage-reports
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.python.coverage.reportPaths=coverage-reports/coverage-python.xml
+            -X
+
+
+
 
   deploy:
     name: Deploy to AWS
     runs-on: ubuntu-latest
     needs: sonarcloud
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.12'
-      - name: Install dependencies for get_all_missions
+
+      - name: Install dependencies for all modules
         run: |
-          cd modules/missions/get_all_missions
-          pip install -r requirements.txt
-      - name: Install dependencies for insert_mission
-        run: |
-          cd modules/missions/insert_mission
-          pip install -r requirements.txt
-      - name: Install dependencies for get_one_mission
-        run: |
-          cd modules/missions/get_one_mission
-          pip install -r requirements.txt
-      - name: Install dependencies for complete_mission
-        run: |
-          cd modules/missions/complete_mission
-      - name: Install dependencies for cancel_mission
-        run: |
-          cd modules/missions/cancel_mission
-          pip install -r requirements.txt
-      - name: Install dependencies for search_mission
-        run: |
-          cd modules/missions/search_mission
-          pip install -r requirements.txt
-      - name: Install dependencies for register_user
-        run: |
-          cd modules/users/register_user
-          pip install -r requirements.txt
-      - name: Install dependencies for set_password
-        run: |
-          cd modules/users/set_password
-          pip install -r requirements.txt
+          for dir in modules/**/; do
+            if [ -f "${dir}/requirements.txt" ]; then
+              pip install -r "${dir}/requirements.txt"
+            fi
+          done
+
+      - name: Give execution permission to modify_imports.sh
+        run: chmod +x ./modify_imports.sh
+
+      - name: Modify imports for deployment
+        run: ./modify_imports.sh deploy
+
       - name: Install AWS CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y awscli
+
       - name: Install SAM CLI
         run: |
           pip install aws-sam-cli
+
       - name: Build SAM application
         run: sam build
+
       - name: Deploy SAM application
         run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name projectDUDU --capabilities CAPABILITY_IAM
         env:

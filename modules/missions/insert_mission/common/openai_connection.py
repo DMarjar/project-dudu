@@ -3,7 +3,7 @@ import json
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from openai import OpenAI
-from modules.missions.insert_mission.common.httpStatusCodeError import HttpStatusCodeError
+from .httpStatusCodeError import HttpStatusCodeError
 
 
 # function to get openai client
@@ -50,7 +50,7 @@ def get_openai_client(original_description):
 
 # function to get secret from secrets manager
 def get_secret():
-    secret_name = "secret/openai/key"
+    secret_name = "secret/openai/key2"
     region_name = "us-east-2"
 
     # Create a Secrets Manager client

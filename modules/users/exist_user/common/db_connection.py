@@ -1,9 +1,10 @@
 import json
 import pymysql
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, NoCredentialsError
+from .httpStatusCodeError import HttpStatusCodeError
 
-DB_HOST = 'dududb.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
+DB_HOST = 'projectdudu-dbinstance-zxd8h1euhjhe.c7gis6w4srg8.us-east-2.rds.amazonaws.com'
 DB_NAME = 'dududb'
 
 
@@ -14,16 +15,19 @@ def get_db_connection():
     password = secrets['password']
     db_name = DB_NAME
 
-    return pymysql.connect(
-        host=host,
-        user=user,
-        password=password,
-        db=db_name
-    )
+    try:
+        return pymysql.connect(
+            host=host,
+            user=user,
+            password=password,
+            db=db_name
+        )
+    except pymysql.MySQLError:
+        raise HttpStatusCodeError(500, "Error connecting to database")
 
 
 def get_secrets():
-    secret_name = "dudu/db/connection"
+    secret_name = "dudu/db/connection2"
     region_name = "us-east-2"
 
     session = boto3.session.Session()
@@ -36,8 +40,8 @@ def get_secrets():
         get_secret_value_response = client.get_secret_value(
             SecretId=secret_name
         )
-    except ClientError as e:
-        raise e
+    except NoCredentialsError:
+        raise HttpStatusCodeError(500, "Error getting secret")
 
     secret = get_secret_value_response['SecretString']
 
