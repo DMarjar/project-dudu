@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch, MagicMock
 from modules.missions.cancel_mission import app
-from modules.missions.cancel_mission.app import validate_body, validate_user, cancel_mission
+from modules.missions.cancel_mission.app import validate_body, validate_user, cancel_mission, lambda_handler
 from modules.missions.cancel_mission.common.httpStatusCodeError import HttpStatusCodeError
 
 
@@ -188,5 +188,45 @@ class TestCancelMission(unittest.TestCase):
 
         self.assertEqual(context.exception.args, (404, "Mission not found or user unauthorized to cancel"))
 
+
+    @patch('modules.missions.cancel_mission.app.validate_body')
+    @patch('modules.missions.cancel_mission.app.validate_user')
+    @patch('modules.missions.cancel_mission.app.cancel_mission')
+    def test_lambda_handler_success(self, mock_cancel_mission, mock_validate_user, mock_validate_body):
+        # Configurar los mocks para que no lancen excepciones
+        mock_validate_body.return_value = True
+        mock_validate_user.return_value = True
+        mock_cancel_mission.return_value = True
+
+        # Crear un evento simulado
+        event = {
+            'body': '{"id_mission": 1, "id_user": 1}'
+        }
+
+        # Ejecutar la lambda handler
+        response = lambda_handler(event, None)
+
+        # Verificar que la respuesta es correcta
+        self.assertEqual(response['statusCode'], 200)
+        self.assertIn('Mission cancelled successfully', response['body'])
+
+    @patch('modules.missions.cancel_mission.app.validate_body')
+    @patch('modules.missions.cancel_mission.app.validate_user')
+    @patch('modules.missions.cancel_mission.app.cancel_mission')
+    def test_lambda_handler_http_error(self, mock_cancel_mission, mock_validate_user, mock_validate_body):
+        # Configurar los mocks
+        mock_validate_body.side_effect = HttpStatusCodeError(400, "Validation error")
+
+        # Crear un evento simulado
+        event = {
+            'body': '{"id_mission": 1, "id_user": 1}'
+        }
+
+        # Ejecutar la lambda handler
+        response = lambda_handler(event, None)
+
+        # Verificar que la respuesta es correcta
+        self.assertEqual(response['statusCode'], 400)
+        self.assertIn('Validation error', response['body'])
 if __name__ == '__main__':
     unittest.main()
