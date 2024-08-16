@@ -1,6 +1,6 @@
 import boto3
 import json
-from common.common_functions import get_secret, get_secret_hash
+from .common.common_functions import get_secret, get_secret_hash
 
 
 def lambda_handler(event, context):
@@ -16,12 +16,12 @@ def lambda_handler(event, context):
     body = json.loads(event['body'])
     username = body['username']
 
-    client_id = "739rrbctbufv3tbr652n35kjfn"
-    client_secret = secrets['SECRET_CLIENT']
-
     try:
+        client = boto3.client('cognito-idp', region_name='us-east-2')
+        user_pool_id = secrets['USER_POOL_ID']
+
         user = client.admin_get_user(
-            UserPoolId=secrets['USER_POOL_ID'],
+            UserPoolId=user_pool_id,
             Username=username
         )
 
@@ -33,7 +33,7 @@ def lambda_handler(event, context):
         if not email:
             return {
                 'statusCode': 404,
-                'body': json.dumps(f'User email not found. {client_id}'),
+                'body': json.dumps(f'User email not found.'),
                 'headers': headers
             }
 
@@ -54,7 +54,7 @@ def lambda_handler(event, context):
     except client.exceptions.UserNotFoundException as e:
         return {
             'statusCode': 404,
-            'body': json.dumps(f'User not found: {str(e)} {client_id}'),
+            'body': json.dumps(f'User not found: {str(e)}'),
             'headers': headers
         }
     except Exception as e:

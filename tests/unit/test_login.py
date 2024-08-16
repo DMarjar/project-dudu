@@ -5,7 +5,7 @@ from modules.users.login import app
 
 EVENT = {
     'body': json.dumps({
-        'username': 'Gislane',
+        'username': 'Atoferatofe',
         'password': '20213Tn105!'
     })
 }
