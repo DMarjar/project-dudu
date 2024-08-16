@@ -6,12 +6,14 @@ from modules.users.change_password.app import lambda_handler
 from modules.users.change_password.common.common_functions import get_secret_value
 
 
-
 class FakeSecretsManagerClient:
     def get_secret_value(self, SecretId):
         if SecretId == "users_pool/client_secret2":
             return {
-                'SecretString': json.dumps({'SECRET_CLIENT': 'fake_secret'})
+                'SecretString': json.dumps({
+                    'ID_CLIENT': 'fake_client_id',
+                    'SECRET_CLIENT': 'fake_secret_client'
+                })
             }
         else:
             raise ClientError(
@@ -48,7 +50,10 @@ class TestLambdaHandler(unittest.TestCase):
         self.mock_get_secret = self.patcher_get_secret.start()
         self.mock_get_secret_hash = self.patcher_get_secret_hash.start()
 
-        self.mock_get_secret.return_value = {'SECRET_CLIENT': 'fake_secret'}
+        self.mock_get_secret.return_value = {
+            'ID_CLIENT': 'fake_client_id',
+            'SECRET_CLIENT': 'fake_secret_client'
+        }
         self.mock_get_secret_hash.return_value = 'fake_secret_hash'
 
     def tearDown(self):
