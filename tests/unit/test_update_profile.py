@@ -4,7 +4,7 @@ import json
 
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from modules.profile.update_profile.app import lambda_handler, validate_body, get_secret
+from modules.profile.update_profile.app import lambda_handler, validate_body, get_secret, get_username_from_sub
 from modules.profile.update_profile.common.httpStatusCodeError import HttpStatusCodeError
 
 
@@ -192,8 +192,197 @@ class TestLambdaHandler(unittest.TestCase):
         self.assertEqual(response['statusCode'], 500)
         self.assertIn("Credentials Error", json.loads(response['body'])['message'])
 
+    @patch('modules.profile.update_profile.app.get_db_connection')
+    @patch('modules.profile.update_profile.app.get_secret')
+    @patch('modules.profile.update_profile.app.update_cognito_user')
+    @patch('modules.profile.update_profile.app.update_user_db')
+    def test_lambda_handler_unexpected_error(self, mock_update_user_db, mock_update_cognito_user, mock_get_secret,
+                                             mock_get_db_connection):
+        mock_get_secret.return_value = {'USER_POOL_ID': 'fake_user_pool_id'}
+        mock_update_cognito_user.side_effect = Exception("Unexpected error")
+
+        event = {
+            'body': json.dumps({
+                'sub': 'fake_sub',
+                'id_user': 'fake_id_user',
+                'email': 'test@example.com',
+                'gender': 'M'
+            })
+        }
+
+        response = lambda_handler(event, None)
+        self.assertEqual(response['statusCode'], 500)
+        self.assertIn("An unexpected error occurred", json.loads(response['body'])['message'])
+
+    def test_validate_body_sub_none(self):
+        body = {
+            'sub': None,
+            'id_user': 'fake_id_user',
+            'email': 'test@example.com',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+
+    def test_validate_body_sub_not_string(self):
+        body = {
+            'sub': 123,
+            'id_user': 'fake_id_user',
+            'email': 'test@example.com',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+
+    def test_validate_body_id_user_none(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': None,
+            'email': 'test@example.com',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+
+    def test_validate_body_id_user_not_string(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': 123,
+            'email': 'test@example.com',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+
+    def test_validate_body_email_none(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': 'fake_id_user',
+            'email': None,
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+
+    def test_validate_body_email_not_string(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': 'fake_id_user',
+            'email': 123,
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+
+    def test_validate_body_gender_none(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': 'fake_id_user',
+            'email': 'test@example.com',
+            'gender': None
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+
+    def test_validate_body_gender_invalid(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': 'fake_id_user',
+            'email': 'test@example.com',
+            'gender': 'X'
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+
+    def test_validate_body_id_user_missing(self):
+        body = {
+            'sub': 'fake_sub',
+            'email': 'test@example.com',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError):
+            validate_body(body)
+    def test_validate_body_sub_empty(self):
+        body = {
+            'sub': '',
+            'id_user': 'fake_id_user',
+            'email': 'test@example.com',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        self.assertEqual(context.exception.status_code, 400)
+        self.assertEqual(context.exception.message, "sub is required and must be a non-empty string")
+
+    def test_validate_body_id_user_empty(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': '',
+            'email': 'test@example.com',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        # Verifica el código de estado y el mensaje
+        self.assertEqual(context.exception.status_code, 400)
+        self.assertEqual(context.exception.message, "id_user is required and must be a non-empty string")
+
+    def test_validate_body_email_missing(self):
+        body = {
+            'sub': 'fake_sub',
+            'id_user': 'fake_id_user',
+            'gender': 'M'
+        }
+        with self.assertRaises(HttpStatusCodeError) as context:
+            validate_body(body)
+        # Verifica el código de estado y el mensaje
+        self.assertEqual(context.exception.status_code, 400)
+        self.assertEqual(context.exception.message, "email is required")
 
 
+    @patch('modules.profile.update_profile.app.boto3.client')
+    def test_get_username_from_sub_success(self, mock_boto_client):
+        # Configuración del mock
+        mock_client = MagicMock()
+        mock_boto_client.return_value = mock_client
+        mock_client.list_users.return_value = {
+            'Users': [{'Username': 'test_username'}]
+        }
+
+        # Llamada a la función con datos simulados
+        sub = 'fake_sub'
+        user_pool_id = 'fake_user_pool_id'
+        username = get_username_from_sub(sub, user_pool_id)
+
+        # Verificaciones
+        self.assertEqual(username, 'test_username')
+        mock_client.list_users.assert_called_once_with(
+            UserPoolId=user_pool_id,
+            Filter=f'sub="{sub}"'
+        )
+
+    @patch('modules.profile.update_profile.app.boto3.client')
+    def test_get_username_from_sub_user_not_found(self, mock_boto_client):
+        # Configuración del mock
+        mock_client = MagicMock()
+        mock_boto_client.return_value = mock_client
+        mock_client.list_users.return_value = {
+            'Users': []
+        }
+
+        # Llamada a la función con datos simulados
+        sub = 'fake_sub'
+        user_pool_id = 'fake_user_pool_id'
+
+        with self.assertRaises(Exception) as context:
+            get_username_from_sub(sub, user_pool_id)
+
+        # Verificaciones
+        self.assertEqual(str(context.exception), "User not found")
+        mock_client.list_users.assert_called_once_with(
+            UserPoolId=user_pool_id,
+            Filter=f'sub="{sub}"'
+        )
 
 if __name__ == '__main__':
     unittest.main()

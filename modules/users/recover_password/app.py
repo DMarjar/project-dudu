@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from common.httpStatusCodeError import HttpStatusCodeError
 
 
-def lambda_handler(event, ___):
+def lambda_handler(event, context):
     headers = {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
@@ -38,7 +38,13 @@ def lambda_handler(event, ___):
 
         return {
             'statusCode': 200,
-            'body': json.dumps(response['CodeDeliveryDetails']),
+            'body': json.dumps('A code to reset your password was sent to your email'),
+            'headers': headers
+        }
+    except HttpStatusCodeError as e:
+        return {
+            'statusCode': e.status_code,
+            'body': json.dumps(str(e)),
             'headers': headers
         }
     except Exception as e:
@@ -49,22 +55,22 @@ def lambda_handler(event, ___):
         }
 
 
-def validate_body(body):
-    """
-    Validate payload
-    Args:
-        body (dict): Payload
-        - username (str): User username
-    """
-    # Validate username
-    if 'username' not in body:
-        raise HttpStatusCodeError(400, "Username is required")
-    if not body['username']:
-        raise HttpStatusCodeError(400, "Username is required")
-    if body['username'] is None:
-        raise HttpStatusCodeError(400, "Username is required")
-    if not isinstance(body['username'], str):
-        raise HttpStatusCodeError(400, "Username must be a string")
+def verify_user(username, secrets):
+    client = boto3.client('cognito-idp', region_name='us-east-2')
+    user_pool_id = secrets['USER_POOL_ID']
+
+    user = client.admin_get_user(
+        UserPoolId=user_pool_id,
+        Username=username
+    )
+
+    email_verified = user['UserAttributes'][1]['Value']
+    user_status = user['UserStatus']
+
+    if str.lower(email_verified) != 'true':
+        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD BECAUSE OF EMAIL VERIFICATION")
+    if user_status != 'CONFIRMED':
+        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD BECAUSE OF USER STATUS NOT CONFIRMED")
 
     return True
 
@@ -92,22 +98,22 @@ def get_secret():
     return json.loads(secret)
 
 
-def verify_user(username, secrets):
-    client = boto3.client('cognito-idp', region_name='us-east-2')
-    user_pool_id = secrets['USER_POOL_ID']
-
-    user = client.admin_get_user(
-        UserPoolId=user_pool_id,
-        Username=username
-    )
-
-    email_verified = user['UserAttributes'][1]['Value']
-    user_status = user['UserStatus']
-
-    if str.lower(email_verified) != 'true':
-        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
-    if user_status != 'CONFIRMED':
-        raise HttpStatusCodeError(200, "MUST CHANGE TEMPORARY PASSWORD")
+def validate_body(body):
+    """
+    Validate payload
+    Args:
+        body (dict): Payload
+        - username (str): User username
+    """
+    # Validate username
+    if 'username' not in body:
+        raise HttpStatusCodeError(400, "Username is required")
+    if not body['username']:
+        raise HttpStatusCodeError(400, "Username is required")
+    if body['username'] is None:
+        raise HttpStatusCodeError(400, "Username is required")
+    if not isinstance(body['username'], str):
+        raise HttpStatusCodeError(400, "Username must be a string")
 
     return True
 
