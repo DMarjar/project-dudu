@@ -3,8 +3,8 @@ import re
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from common.httpStatusCodeError import HttpStatusCodeError
 from common.db_connection import get_db_connection
+from common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, context):
@@ -17,7 +17,7 @@ def lambda_handler(event, context):
         update_cognito_user(body['sub'], body, secrets)
 
         # Actualizar el usuario en la base de datos
-        update_user_db(body['id_user'], body['username'], body['gender'] )
+        update_user_db(body['id_user'], body['gender'] )
 
         response = {
             'statusCode': 200,
@@ -91,18 +91,6 @@ def validate_body(body):
         raise HttpStatusCodeError(400, "email must be a string")
     if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', body['email']):
         raise HttpStatusCodeError(400, "Invalid email format")
-
-    # Validate username
-    if 'username' not in body:
-        raise HttpStatusCodeError(400, "username is required")
-    if body['username'] is None:
-        raise HttpStatusCodeError(400, "username is required")
-    if not isinstance(body['username'], str):
-        raise HttpStatusCodeError(400, "username must be a string")
-    if len(body['username']) < 3:
-        raise HttpStatusCodeError(400, "username must be at least 3 characters long")
-    if len(body['username']) > 20:
-        raise HttpStatusCodeError(400, "username must be at most 20 characters long")
 
     # Validate gender
     if 'gender' not in body:
@@ -181,12 +169,12 @@ def update_cognito_user(sub, body, secrets):
         raise HttpStatusCodeError(500, "Error updating user in Cognito: " + str(e))
 
 
-def update_user_db(id_user, username, gender):
+def update_user_db(id_user, gender):
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            sql = "UPDATE users SET username = %s, gender = %s WHERE id_user = %s"
-            cursor.execute(sql, (username, gender, id_user))
+            sql = "UPDATE users SET gender = %s WHERE id_user = %s"
+            cursor.execute(sql, (gender, id_user))
         connection.commit()
     except Exception as e:
         raise HttpStatusCodeError(500, "Database SQL Error: " + str(e))
