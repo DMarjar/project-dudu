@@ -73,27 +73,27 @@ class TestLambdaHandler(unittest.TestCase):
             self.assertEqual(response['statusCode'], 200)
             self.assertEqual(json.loads(response['body']), 'Password has been reset successfully.')
 
-    # def test_code_mismatch_exception(self):
-    #     with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
-    #         # Simulamos la excepción CodeMismatchException en el cliente de Cognito
-    #         with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password', side_effect=ClientError(
-    #                 {'Error': {'Code': 'CodeMismatchException', 'Message': 'The code passed is incorrect.'}},
-    #                 'ConfirmForgotPassword'
-    #         )):
-    #             event = {
-    #                 'body': json.dumps({
-    #                     'username': 'testuser',
-    #                     'confirmation_code': '123456',
-    #                     'new_password': 'newpassword123',
-    #                     'confirm_new_password': 'newpassword123'
-    #                 })
-    #             }
-    #
-    #             context = {}
-    #             response = lambda_handler(event, context)
-    #
-    #             self.assertEqual(response['statusCode'], 400)
-    #             self.assertEqual(json.loads(response['body']), 'Invalid confirmation code.')
+    def test_code_mismatch_exception(self):
+        with patch('modules.users.change_password.app.boto3.client', return_value=FakeCognitoIdpClient()):
+            # Simulamos la excepción CodeMismatchException en el cliente de Cognito
+            with patch.object(FakeCognitoIdpClient, 'confirm_forgot_password', side_effect=ClientError(
+                    {'Error': {'Code': 'CodeMismatchException', 'Message': 'The code passed is incorrect.'}},
+                    'ConfirmForgotPassword'
+            )):
+                event = {
+                    'body': json.dumps({
+                        'username': 'testuser',
+                        'confirmation_code': '123456',
+                        'new_password': 'newpassword123',
+                        'confirm_new_password': 'newpassword123'
+                    })
+                }
+
+                context = {}
+                response = lambda_handler(event, context)
+
+                self.assertEqual(response['statusCode'], 400)
+                self.assertEqual(json.loads(response['body']), 'Invalid confirmation code.')
 
     if __name__ == '__main__':
         unittest.main()
