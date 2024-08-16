@@ -341,7 +341,6 @@ class TestLambdaHandler(unittest.TestCase):
 
     @patch('modules.profile.update_profile.app.boto3.client')
     def test_get_username_from_sub_success(self, mock_boto_client):
-        # Configuración del mock
         mock_client = MagicMock()
         mock_boto_client.return_value = mock_client
         mock_client.list_users.return_value = {
@@ -394,7 +393,6 @@ class TestLambdaHandler(unittest.TestCase):
         mock_boto_client.return_value = mock_client
         mock_get_username_from_sub.return_value = 'test_username'
 
-        # Configura el mock para lanzar ClientError con UserNotFoundException
         mock_client.admin_update_user_attributes.side_effect = ClientError(
             {"Error": {"Code": "UserNotFoundException", "Message": "User not found"}},
             "AdminUpdateUserAttributes"
@@ -429,10 +427,8 @@ class TestLambdaHandler(unittest.TestCase):
         with self.assertRaises(HttpStatusCodeError) as context:
             update_cognito_user(sub, body, secrets)
 
-        # Imprime el mensaje de error para ver el formato real
         print(context.exception.args)
 
-        # Ajusta la aserción para coincidir con el mensaje de error real
         self.assertEqual(context.exception.args[0], 500)
         self.assertTrue("Error updating user in Cognito:" in context.exception.args[1])
 
@@ -443,16 +439,13 @@ class TestLambdaHandler(unittest.TestCase):
         mock_get_db_connection.return_value = mock_connection
         mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
 
-        # Configura el cursor para ejecutar la consulta sin problemas
         mock_cursor.execute.return_value = None
 
         id_user = 'fake_id_user'
         gender = 'male'
 
-        # Llama a la función a probar
         update_user_db(id_user, gender)
 
-        # Verifica que la consulta SQL se ejecutó correctamente
         mock_cursor.execute.assert_called_once_with(
             "UPDATE users SET gender = %s WHERE id_user = %s",
             (gender, id_user)
@@ -467,13 +460,10 @@ class TestLambdaHandler(unittest.TestCase):
         mock_get_db_connection.return_value = mock_connection
         mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
 
-        # Configura el cursor para lanzar una excepción SQL
         mock_cursor.execute.side_effect = Exception("SQL Error")
 
         id_user = 'fake_id_user'
         gender = 'male'
-
-        # Llama a la función y verifica que se maneja la excepción
         with self.assertRaises(HttpStatusCodeError) as context:
             update_user_db(id_user, gender)
 
