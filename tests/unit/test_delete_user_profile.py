@@ -102,24 +102,20 @@ class TestDeleteUserProfile(unittest.TestCase):
 
     """Test to ensure the database connection is established and not None"""
 
-    @patch('modules.users.delete_user_profile.common.db_connection.boto3.client')
+    @patch('boto3.client')
     def test_get_db_connection(self, mock_boto_client):
-        # Create a mock client instance
+
         mock_client = MagicMock()
         mock_client.get_secret_value.return_value = {
-            'SecretString': json.dumps({
-                'DB_HOST': 'mock_host',
-                'DB_USER': 'mock_user',
-                'DB_PASSWORD': 'mock_password'
-            })
+            'SecretString': '{"db_password": "test_password"}'
         }
         mock_boto_client.return_value = mock_client
 
-        # Run the test
+
         connection = get_db_connection()
+
+
         self.assertIsNotNone(connection)
-        print("Test Passed: Database connection established")
-        connection.close()
 
 
     """Test to ensure the delete_user_db function deletes a user successfully from the database"""
