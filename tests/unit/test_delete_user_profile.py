@@ -1,6 +1,6 @@
 import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import boto3
 import pytest
@@ -104,16 +104,23 @@ class TestDeleteUserProfile(unittest.TestCase):
 
     @patch('modules.users.delete_user_profile.common.db_connection.boto3.client')
     def test_get_db_connection(self, mock_boto_client):
-        class MockSecretsManagerClient:
-            def get_secret_value(self, SecretId):
-                return {'SecretString': json.dumps(
-                    {'DB_HOST': 'mock_host', 'DB_USER': 'mock_user', 'DB_PASSWORD': 'mock_password'})}
+        # Create a mock client instance
+        mock_client = MagicMock()
+        mock_client.get_secret_value.return_value = {
+            'SecretString': json.dumps({
+                'DB_HOST': 'mock_host',
+                'DB_USER': 'mock_user',
+                'DB_PASSWORD': 'mock_password'
+            })
+        }
+        mock_boto_client.return_value = mock_client
 
-        mock_boto_client.return_value = MockSecretsManagerClient()
+        # Run the test
         connection = get_db_connection()
-        assert connection is not None
+        self.assertIsNotNone(connection)
         print("Test Passed: Database connection established")
         connection.close()
+
 
     """Test to ensure the delete_user_db function deletes a user successfully from the database"""
 
