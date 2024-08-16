@@ -6,8 +6,8 @@ import random
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from common.httpStatusCodeError import HttpStatusCodeError
-from common.db_connection import get_db_connection
+from .common.httpStatusCodeError import HttpStatusCodeError
+from .common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
