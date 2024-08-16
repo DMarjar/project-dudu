@@ -5,7 +5,7 @@ import json
 from botocore.exceptions import ClientError, NoCredentialsError
 
 from modules.profile.update_profile.app import lambda_handler, validate_body, get_secret, get_username_from_sub, \
-    update_cognito_user
+    update_cognito_user, update_user_db
 from modules.profile.update_profile.common.httpStatusCodeError import HttpStatusCodeError
 
 
@@ -409,8 +409,76 @@ class TestLambdaHandler(unittest.TestCase):
 
         self.assertEqual(context.exception.args, (404, "User not found in Cognito"))
 
+    @patch('modules.profile.update_profile.app.boto3.client')
+    @patch('modules.profile.update_profile.app.get_username_from_sub')
+    def test_update_cognito_user_client_error(self, mock_get_username_from_sub, mock_boto_client):
+        mock_client = MagicMock()
+        mock_boto_client.return_value = mock_client
+        mock_get_username_from_sub.return_value = 'test_username'
 
+        # Configura el mock para lanzar ClientError
+        mock_client.admin_update_user_attributes.side_effect = ClientError(
+            {"Error": {"Code": "ClientError", "Message": "Update failed"}},
+            "AdminUpdateUserAttributes"
+        )
 
+        sub = 'fake_sub'
+        body = {'email': 'test@example.com'}
+        secrets = {'USER_POOL_ID': 'fake_user_pool_id'}
+
+        with self.assertRaises(HttpStatusCodeError) as context:
+            update_cognito_user(sub, body, secrets)
+
+        # Imprime el mensaje de error para ver el formato real
+        print(context.exception.args)
+
+        # Ajusta la aserción para coincidir con el mensaje de error real
+        self.assertEqual(context.exception.args[0], 500)
+        self.assertTrue("Error updating user in Cognito:" in context.exception.args[1])
+
+    @patch('modules.profile.update_profile.app.get_db_connection')
+    def test_update_user_db_success(self, mock_get_db_connection):
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_connection
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+        # Configura el cursor para ejecutar la consulta sin problemas
+        mock_cursor.execute.return_value = None
+
+        id_user = 'fake_id_user'
+        gender = 'male'
+
+        # Llama a la función a probar
+        update_user_db(id_user, gender)
+
+        # Verifica que la consulta SQL se ejecutó correctamente
+        mock_cursor.execute.assert_called_once_with(
+            "UPDATE users SET gender = %s WHERE id_user = %s",
+            (gender, id_user)
+        )
+        mock_connection.commit.assert_called_once()
+
+    @patch('modules.profile.update_profile.app.get_db_connection')
+    def test_update_user_db_sql_error(self, mock_get_db_connection):
+        # Configura el mock de la conexión a la base de datos
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_connection
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+        # Configura el cursor para lanzar una excepción SQL
+        mock_cursor.execute.side_effect = Exception("SQL Error")
+
+        id_user = 'fake_id_user'
+        gender = 'male'
+
+        # Llama a la función y verifica que se maneja la excepción
+        with self.assertRaises(HttpStatusCodeError) as context:
+            update_user_db(id_user, gender)
+
+        self.assertEqual(context.exception.args[0], 500)
+        self.assertTrue("Database SQL Error:" in context.exception.args[1])
 
 if __name__ == '__main__':
     unittest.main()
