@@ -5,7 +5,7 @@ import json
 import re
 import boto3
 
-from .common.httpStatusCodeError import HttpStatusCodeError
+from common.httpStatusCodeError import HttpStatusCodeError
 from botocore.exceptions import ClientError, NoCredentialsError
 
 
