@@ -163,10 +163,11 @@ def update_cognito_user(sub, body, secrets):
                 }
             ]
         )
-    except client.exceptions.UserNotFoundException:
-        raise HttpStatusCodeError(404, "User not found in Cognito")
-    except client.exceptions.ClientError as e:
-        raise HttpStatusCodeError(500, "Error updating user in Cognito: " + str(e))
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'UserNotFoundException':
+            raise HttpStatusCodeError(404, "User not found in Cognito")
+        else:
+            raise HttpStatusCodeError(500, "Error updating user in Cognito: " + str(e))
 
 
 def update_user_db(id_user, gender):
