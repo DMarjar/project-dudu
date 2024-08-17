@@ -5,7 +5,7 @@ import json
 import base64
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from .common.httpStatusCodeError import HttpStatusCodeError
+from modules.users.login.common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):

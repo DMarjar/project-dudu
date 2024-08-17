@@ -1,7 +1,7 @@
 import json
-from common.db_connection import get_db_connection
+from modules.missions.search_mission.common.db_connection import get_db_connection
 from pymysql.cursors import DictCursor
-from common.httpStatusCodeError import HttpStatusCodeError
+from modules.missions.search_mission.common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, __):

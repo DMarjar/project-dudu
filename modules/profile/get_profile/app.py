@@ -1,9 +1,9 @@
 import json
 import boto3
 from pymysql.cursors import DictCursor
-from common.db_connection import get_db_connection
+from modules.profile.get_profile.common.db_connection import get_db_connection
 from botocore.exceptions import ClientError, NoCredentialsError
-from common.httpStatusCodeError import HttpStatusCodeError
+from modules.profile.get_profile.common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, __):

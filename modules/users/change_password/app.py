@@ -1,7 +1,7 @@
 import boto3
 import json
 from botocore.exceptions import ClientError
-from common.common_functions import get_secret, get_secret_hash
+from modules.users.change_password.common.common_functions import get_secret, get_secret_hash
 
 
 def lambda_handler(event, context):

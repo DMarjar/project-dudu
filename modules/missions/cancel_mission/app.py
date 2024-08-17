@@ -1,6 +1,6 @@
 import json
-from common.db_connection import get_db_connection
-from common.httpStatusCodeError import HttpStatusCodeError
+from modules.missions.cancel_mission.common.db_connection import get_db_connection
+from modules.missions.cancel_mission.common.httpStatusCodeError import HttpStatusCodeError
 
 
 def lambda_handler(event, ___):

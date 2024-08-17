@@ -1,7 +1,7 @@
 import json
 
-from common.httpStatusCodeError import HttpStatusCodeError
-from common.db_connection import get_db_connection
+from modules.users.exist_user.common.httpStatusCodeError import HttpStatusCodeError
+from modules.users.exist_user.common.db_connection import get_db_connection
 
 
 def lambda_handler(event, ___):
