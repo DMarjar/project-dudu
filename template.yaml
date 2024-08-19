@@ -240,8 +240,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /insert_mission
             Method: post
-            Auth:
-              Authorizer: CognitoAuthorizer
+            #Auth:
+              #Authorizer: CognitoAuthorizer
 
   RecoverPasswordFunction:
     Type: AWS::Serverless::Function
@@ -333,8 +333,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /complete_mission
             Method: put
-            Auth:
-              Authorizer: CognitoAuthorizer
+            #Auth:
+              #Authorizer: CognitoAuthorizer
 
 
   CancelMissionFunction:
@@ -353,8 +353,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /cancel_mission
             Method: put
-            Auth:
-              Authorizer: CognitoAuthorizer
+            #Auth:
+              #Authorizer: CognitoAuthorizer
 
   SearchMissionFunction:
     Type: AWS::Serverless::Function
@@ -372,8 +372,8 @@ Resources:
             RestApiId: !Ref MissionApi
             Path: /search_mission
             Method: post
-            Auth:
-              Authorizer: CognitoAuthorizer
+            #Auth:
+              #Authorizer: CognitoAuthorizer
 
   RegisterUserFunction:
     Type: AWS::Serverless::Function
@@ -479,6 +479,23 @@ Resources:
             Path: /register_alexa_user
             Method: post
 
+  UpdateAlexaUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: modules/users/update_alexa_user/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        UpdateAlexaUser:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UsersApi
+            Method: post
+            Path: /update_alexa_user
+
   MissionApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -572,6 +589,9 @@ Outputs:
   RegisterAlexaUserApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Register Alexa User function"
     Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/register_alexa_user/"
+  UpdateAlexaUserApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Update Alexa User function"
+    Value: !Sub "https://${UsersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_alexa_user/"
 
 
 
@@ -620,3 +640,6 @@ Outputs:
   RegisterAlexaUserFunctionArn:
     Description: "Register Alexa User Lambda Function ARN"
     Value: !GetAtt RegisterAlexaUserFunction.Arn
+  UpdateAlexaUserFunctionArn:
+    Description: "Update Alexa User Lambda Function ARN"
+    Value: !GetAtt UpdateAlexaUserFunction.Arn
